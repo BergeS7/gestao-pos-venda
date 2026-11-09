@@ -1,0 +1,163 @@
+// ---------- Estrutura geral ----------
+.app-shell {
+  min-height: 100vh;
+}
+
+// ---------- Menu lateral ----------
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: $sidebar-width;
+  background: $sidebar-bg;
+  color: $mm-branco;
+  display: flex;
+  flex-direction: column;
+  z-index: 1040;
+  transition: transform 0.2s ease;
+
+  @include media-breakpoint-down(lg) {
+    transform: translateX(-100%);
+
+    &.is-open {
+      transform: translateX(0);
+    }
+  }
+}
+
+.sidebar-brand {
+  padding: 1.5rem 1.25rem 1.25rem;
+  border-bottom: 1px solid rgba($mm-branco, 0.1);
+
+  .brand-name {
+    font-weight: 800;
+    font-size: 1.35rem;
+    line-height: 1.05;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .brand-bar {
+    width: 64px;
+    height: 4px;
+    background: $primary;
+    border-radius: 2px;
+    margin: 0.5rem 0;
+  }
+
+  .brand-sub {
+    font-size: 0.85rem;
+    color: $mm-cinza-claro;
+  }
+}
+
+.sidebar-nav {
+  padding: 1rem 0.75rem;
+  flex: 1;
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: rgba($mm-branco, 0.8);
+    border-radius: $border-radius;
+    padding: 0.65rem 0.9rem;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+
+    i {
+      font-size: 1.1rem;
+    }
+
+    &:hover {
+      color: $mm-branco;
+      background: rgba($mm-branco, 0.08);
+    }
+
+    &.active {
+      color: $mm-branco;
+      background: $primary;
+    }
+  }
+}
+
+.sidebar-footer {
+  padding: 1rem 1.25rem;
+  font-size: 0.75rem;
+  color: $mm-cinza-claro;
+  border-top: 1px solid rgba($mm-branco, 0.1);
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba($mm-preto, 0.45);
+  z-index: 1030;
+}
+
+// ---------- Área principal ----------
+.main {
+  @include media-breakpoint-up(lg) {
+    margin-left: $sidebar-width;
+  }
+}
+
+.topbar {
+  height: $topbar-height;
+  background: $mm-branco;
+  border-bottom: 3px solid $primary;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+
+  .topbar-title {
+    font-weight: 600;
+    color: $mm-cinza-escuro;
+  }
+}
+
+.content {
+  padding: 1.5rem 1rem;
+
+  @include media-breakpoint-up(md) {
+    padding: 2rem;
+  }
+}
+
+.page-header {
+  margin-bottom: 1.5rem;
+
+  h1 {
+    font-size: 1.75rem;
+    margin-bottom: 0.25rem;
+  }
+
+  p {
+    color: $mm-cinza-escuro;
+    margin: 0;
+  }
+}
+
+// ---------- Cards de indicador ----------
+.kpi-card {
+  border: 1px solid $border-color;
+  background: $mm-branco;
+
+  .kpi-label {
+    font-size: 0.85rem;
+    color: $mm-cinza-escuro;
+  }
+
+  .kpi-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+  }
+
+  .kpi-icon {
+    font-size: 1.5rem;
+    color: $primary;
+  }
+}

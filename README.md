@@ -177,7 +177,26 @@ Abra <http://localhost:3333/api/health>. Deve aparecer `{ "ok": true, ... }`.
 | `npm start` | Roda a versão compilada |
 | `npm run typecheck` | Confere os tipos sem compilar |
 
-> O frontend (`apps/web`) será documentado aqui na Etapa 3.
+### Frontend (`apps/web`)
+
+Com a API rodando, abra outro terminal:
+
+```bash
+cd apps/web
+npm install
+npm run dev
+```
+
+Abra <http://localhost:5173>. O Dashboard deve mostrar **API ok**. O Vite encaminha as chamadas `/api` para a porta 3333.
+
+| Script | O que faz |
+|---|---|
+| `npm run dev` | Sobe o frontend em modo desenvolvimento |
+| `npm run build` | Confere os tipos e gera a versão de produção em `dist/` |
+| `npm run preview` | Serve a versão de produção localmente |
+| `npm run lint` | Verifica o código (oxlint) |
+
+O tema fica em `src/styles/`: as cores da marca estão em `_variables.scss` e o layout em `_layout.scss`.
 
 ### ⚠️ Dados sensíveis
 As planilhas em `Documentos/` têm **nome, CPF e celular de clientes reais**. A pasta está no `.gitignore` e **nunca** deve ir para o GitHub. Para desenvolver, use só dados fictícios em `db/seed/`.

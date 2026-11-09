@@ -45,14 +45,14 @@ Dentro de `apps/api`:
 
 ## Etapa 3 — Frontend "Olá mundo" (React + Bootstrap + Sass)
 Dentro de `apps/`:
-- [ ] `npm create vite@latest web -- --template react-ts`
-- [ ] Em `apps/web`: `npm i bootstrap react-router-dom` e `npm i -D sass`
-- [ ] Criar `src/styles/main.scss` com as cores da marca **antes** de `@import "bootstrap/scss/bootstrap";`: `$primary: #cc0000; $secondary: #5c5c5c; $light: #b2b0b0;`
-- [ ] Importar `main.scss` no `main.tsx`
-- [ ] Montar o **layout base**: menu lateral escuro (Dashboard, Carteira, Atendimentos, Importações, Usuários) e área de conteúdo
-- [ ] Criar uma página vazia para cada item do menu, ligadas com `react-router-dom`
-- [ ] No Vite, configurar um proxy de `/api` para `http://localhost:3333`
-- [ ] Na página Dashboard, chamar `/api/health` e mostrar o resultado
+- [x] `npm create vite@latest web -- --template react-ts` (React 19 + Vite 8)
+- [x] Em `apps/web`: `npm i bootstrap bootstrap-icons react-router-dom` e `npm i -D sass`
+- [x] Tema em `src/styles/`: `_variables.scss` (cores da marca e fonte Montserrat) → Bootstrap → `_layout.scss`
+- [x] Importar `main.scss` no `main.tsx`
+- [x] **Layout base** (`components/Layout.tsx`): menu lateral escuro, barra superior com faixa vermelha e menu recolhível no celular
+- [x] Páginas: Dashboard, Fila de revisões, Atendimentos, Importações, Usuários e 404
+- [x] Proxy `/api` → `http://localhost:3333` no `vite.config.ts`
+- [x] Dashboard chama `/api/health` e mostra "API ok" (ou o aviso de API fora do ar)
 
 **Pronto quando:** você navega entre as páginas e o Dashboard mostra "API ok".
 
