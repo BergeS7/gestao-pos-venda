@@ -30,13 +30,14 @@ Checklist para construir o sistema **aos poucos**. Cada etapa termina com algo f
 
 ## Etapa 2 — Backend "Olá mundo" (Express + TypeScript)
 Dentro de `apps/api`:
-- [ ] `npm init -y`
-- [ ] `npm i express cors dotenv`
-- [ ] `npm i -D typescript tsx @types/node @types/express @types/cors`
-- [ ] `npx tsc --init`
-- [ ] Criar `src/server.ts` com a rota `GET /api/health` respondendo `{ ok: true }`
-- [ ] Script `"dev": "tsx watch src/server.ts"` no `package.json`
-- [ ] Criar `.env` (com `PORT=3333`) e `.env.example`
+- [x] `npm init -y`
+- [x] `npm i express cors dotenv` (Express 5)
+- [x] `npm i -D typescript tsx @types/node @types/express @types/cors`
+- [x] `tsconfig.json` (ESM / NodeNext, `src` → `dist`)
+- [x] `src/app.ts` (app Express, CORS, 404 e erros), `src/server.ts` (sobe o servidor), `src/config.ts` (lê o `.env`)
+- [x] Rota `GET /api/health` em `src/routes/health.ts`
+- [x] Scripts: `dev`, `build`, `start`, `typecheck`
+- [x] `.env` (fora do Git) e `.env.example`
 
 **Pronto quando:** `npm run dev` roda e o navegador mostra `{ "ok": true }` em `http://localhost:3333/api/health`.
 

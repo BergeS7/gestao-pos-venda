@@ -159,7 +159,25 @@ cd gestao-pos-venda
 
 Pré-requisitos: Node.js 20+, Git e PostgreSQL 15+ (ou Supabase). O passo a passo completo está no [ROTEIRO.md](ROTEIRO.md).
 
-> Os comandos `npm install` e `npm run dev` e as variáveis de ambiente serão documentados aqui assim que os apps forem criados.
+### API (`apps/api`)
+
+```bash
+cd apps/api
+npm install
+cp .env.example .env
+npm run dev
+```
+
+Abra <http://localhost:3333/api/health>. Deve aparecer `{ "ok": true, ... }`.
+
+| Script | O que faz |
+|---|---|
+| `npm run dev` | Sobe a API em modo desenvolvimento e reinicia a cada alteração |
+| `npm run build` | Compila o TypeScript para `dist/` |
+| `npm start` | Roda a versão compilada |
+| `npm run typecheck` | Confere os tipos sem compilar |
+
+> O frontend (`apps/web`) será documentado aqui na Etapa 3.
 
 ### ⚠️ Dados sensíveis
 As planilhas em `Documentos/` têm **nome, CPF e celular de clientes reais**. A pasta está no `.gitignore` e **nunca** deve ir para o GitHub. Para desenvolver, use só dados fictícios em `db/seed/`.
