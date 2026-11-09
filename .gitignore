@@ -1,0 +1,31 @@
+# Dependências e build
+node_modules/
+dist/
+build/
+.vite/
+coverage/
+
+# Ambiente
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Dados reais da operação: NUNCA versionar (contêm CPF, telefones e nomes)
+Documentos/
+*.xlsx
+*.xls
+*.csv
+!db/seed/**/*.csv
+
+# Sistema / editor
+.DS_Store
+Thumbs.db
+~$*
+.vscode/*
+!.vscode/extensions.json

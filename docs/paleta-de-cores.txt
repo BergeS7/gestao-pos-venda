@@ -1,0 +1,5 @@
+Vermelho: #cc0000
+Cinza escuro: #5c5c5c
+Cinza Claro: #b2b0b0
+Branco: #ffffff
+Preto: #0000
