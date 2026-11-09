@@ -1,23 +1,9 @@
-import { useEffect, useState } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
-
-// Itens do menu lateral
-export const menu = [
-  { to: '/dashboard', label: 'Dashboard', icon: 'bi-speedometer2' },
-  { to: '/revisoes', label: 'Fila de revisões', icon: 'bi-people' },
-  { to: '/atendimentos', label: 'Atendimentos', icon: 'bi-headset' },
-  { to: '/importacoes', label: 'Importações', icon: 'bi-upload' },
-  { to: '/usuarios', label: 'Usuários', icon: 'bi-person-gear' },
-]
+import { useState } from 'react'
+import { NavLink, Outlet } from 'react-router-dom'
+import { menu } from './menu.ts'
 
 export default function Layout() {
   const [menuAberto, setMenuAberto] = useState(false)
-  const location = useLocation()
-
-  // Fecha o menu (no celular) ao trocar de página
-  useEffect(() => {
-    setMenuAberto(false)
-  }, [location.pathname])
 
   return (
     <div className="app-shell">
@@ -34,7 +20,12 @@ export default function Layout() {
 
         <nav className="sidebar-nav nav flex-column">
           {menu.map((item) => (
-            <NavLink key={item.to} to={item.to} className="nav-link">
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className="nav-link"
+              onClick={() => setMenuAberto(false)} // fecha o menu no celular ao trocar de página
+            >
               <i className={`bi ${item.icon}`} aria-hidden="true" />
               {item.label}
             </NavLink>
