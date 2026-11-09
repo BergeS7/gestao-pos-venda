@@ -1,3 +1,7 @@
+/**
+ * pages/Revisoes.tsx — Fila de revisões — lista de clientes elegíveis por revisão. Será construída na Etapa 7 (ROTEIRO.md).
+ */
+
 import EmBreve from '../components/EmBreve.tsx'
 import PageHeader from '../components/PageHeader.tsx'
 

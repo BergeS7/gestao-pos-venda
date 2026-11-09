@@ -1,9 +1,21 @@
+/**
+ * EmBreve.tsx — Aviso de "página em construção"
+ *
+ * Usado nas páginas que ainda serão desenvolvidas, indicando em qual etapa do
+ * ROTEIRO.md elas serão feitas. Deve ser removido de cada página quando ela
+ * for implementada.
+ *
+ * Uso:
+ *   <EmBreve etapa="Etapa 6" descricao="Upload e cruzamento dos relatórios." />
+ */
+
 type Props = {
+  /** Etapa do ROTEIRO.md em que a página será construída (ex.: "Etapa 6"). */
   etapa: string
+  /** Resumo do que a página vai ter. */
   descricao: string
 }
 
-// Marcador para páginas que ainda serão construídas
 export default function EmBreve({ etapa, descricao }: Props) {
   return (
     <div className="card border-0 shadow-sm">

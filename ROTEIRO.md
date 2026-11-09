@@ -172,3 +172,4 @@ Reproduzir o relatório mensal de produção que hoje é feito à mão:
 - Faça uma etapa de cada vez e só avance quando o "Pronto quando" funcionar.
 - Use sempre **dados fictícios** no desenvolvimento.
 - Se travar em algum item, peça ajuda citando a etapa (ex.: "Etapa 6, ler XLSX").
+- **Documente e comente tudo:** cabeçalho em todo arquivo, JSDoc nas funções e tipos, e atualize o [docs/arquitetura.md](docs/arquitetura.md) ao fim de cada etapa.

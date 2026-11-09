@@ -1,3 +1,7 @@
+/**
+ * pages/Atendimentos.tsx — Atendimentos — registro dos contatos com o cliente. Será construída na Etapa 8 (ROTEIRO.md).
+ */
+
 import EmBreve from '../components/EmBreve.tsx'
 import PageHeader from '../components/PageHeader.tsx'
 

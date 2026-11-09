@@ -1,3 +1,7 @@
+/**
+ * pages/NaoEncontrada.tsx — Página 404 — exibida quando a URL não corresponde a nenhuma rota de App.tsx.
+ */
+
 import { Link } from 'react-router-dom'
 import PageHeader from '../components/PageHeader.tsx'
 

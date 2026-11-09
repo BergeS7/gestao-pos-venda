@@ -1,3 +1,15 @@
+// =============================================================================
+// main.scss — Folha de estilos principal (importada em src/main.tsx)
+//
+// A ORDEM dos imports é obrigatória:
+//   1. _variables.scss → nossas cores/fontes, que sobrescrevem os padrões do
+//      Bootstrap. Precisam vir ANTES, porque o Bootstrap usa `!default`
+//      (só define a variável se ela ainda não existir).
+//   2. Bootstrap       → gera todo o CSS do Bootstrap já com o nosso tema.
+//   3. _layout.scss    → estilos próprios do sistema (menu lateral, cards...),
+//      que podem usar as variáveis e mixins do Bootstrap.
+// =============================================================================
+
 @import "variables";
 @import "bootstrap/scss/bootstrap";
 @import "layout";

@@ -1,3 +1,7 @@
+/**
+ * pages/Importacoes.tsx — Importações — upload e cruzamento dos relatórios do Cloud. Será construída na Etapa 6 (ROTEIRO.md).
+ */
+
 import EmBreve from '../components/EmBreve.tsx'
 import PageHeader from '../components/PageHeader.tsx'
 
