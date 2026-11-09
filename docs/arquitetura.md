@@ -2,6 +2,17 @@
 
 Como o sistema está organizado **hoje** (Etapas 1 a 3 do [ROTEIRO.md](../ROTEIRO.md)) e para onde ele vai. **Atualize este documento a cada etapa concluída.**
 
+> **Arquitetura cliente-servidor em 3 camadas (*three-tier*): SPA em React + API REST em Node.js/Express + banco PostgreSQL, organizada em monorepo.**
+
+| Conceito | Onde aparece no projeto |
+|---|---|
+| **Cliente-servidor** | O navegador (cliente) pede dados e a API (servidor) responde |
+| **3 camadas (*three-tier*)** | **Apresentação** (React) → **Aplicação/regras** (Express) → **Dados** (PostgreSQL) |
+| **SPA (*Single Page Application*)** | O frontend carrega uma vez e troca de página sem recarregar (React Router) |
+| **API REST** | Endereços como `GET /api/health`, sempre respondendo JSON |
+| **Camadas dentro da API** | `routes` (entrada HTTP) → `services` (regras de negócio) → `db` (acesso ao banco) |
+| **Monorepo** | Frontend e API no mesmo repositório (`apps/web` e `apps/api`) |
+
 ---
 
 ## 1. Visão geral
