@@ -1,6 +1,6 @@
 # Arquitetura do sistema
 
-Como o sistema está organizado **hoje** (Etapas 1 a 3 do [ROTEIRO.md](../ROTEIRO.md)) e para onde ele vai. **Atualize este documento a cada etapa concluída.**
+Como o sistema está organizado **hoje** (Etapas 1 a 4 do [ROTEIRO.md](../ROTEIRO.md)) e para onde ele vai. **Atualize este documento a cada etapa concluída.**
 
 > **Arquitetura cliente-servidor em 3 camadas (*three-tier*): SPA em React + API REST em Node.js/Express + banco PostgreSQL, organizada em monorepo.**
 
@@ -23,6 +23,7 @@ O sistema tem **duas aplicações separadas** dentro do mesmo repositório (estr
 |---|---|---|---|
 | **Frontend** | `apps/web` | Telas que o usuário vê no navegador (React) | 5173 |
 | **API** (backend) | `apps/api` | Servidor que guarda as regras e os dados (Express) | 3333 |
+| **Banco de dados** | (serviço do Windows) | PostgreSQL 18, banco `gestao_pos_venda` | 5432 |
 
 ```
                  NAVEGADOR
@@ -40,11 +41,16 @@ O sistema tem **duas aplicações separadas** dentro do mesmo repositório (estr
    └──────────────────┬───────────────────┘
                       ▼
    ┌──────────────────────────────────────┐
-   │  API Express  (apps/api)             │  3. a API responde JSON
-   │  http://localhost:3333               │     { ok: true, ... }
-   │                                      │
-   │  (Etapa 4) ──► PostgreSQL            │  4. no futuro, lê e grava
-   └──────────────────────────────────────┘     no banco de dados
+   │  API Express  (apps/api)             │  3. a API processa e
+   │  http://localhost:3333               │     responde JSON
+   │  rota → serviço → Prisma             │
+   └──────────────────┬───────────────────┘
+                      │  4. lê e grava pelo Prisma (usuário pos_venda)
+                      ▼
+   ┌──────────────────────────────────────┐
+   │  PostgreSQL 18  (localhost:5432)     │
+   │  banco gestao_pos_venda              │
+   └──────────────────────────────────────┘
 ```
 
 **Por que separar frontend e API?**
@@ -64,8 +70,21 @@ gestao-pos-venda/
 │   │   │   ├── server.ts         Ponto de entrada: liga o servidor na porta
 │   │   │   ├── app.ts            Monta o Express: middlewares, rotas, 404, erros
 │   │   │   ├── config.ts         Lê o .env e expõe as configurações tipadas
-│   │   │   └── routes/
-│   │   │       └── health.ts     GET /api/health
+│   │   │   ├── routes/           CAMADA HTTP: lê a requisição e responde
+│   │   │   │   ├── health.ts     GET /api/health
+│   │   │   │   └── revisoes.ts   GET /api/revisoes
+│   │   │   ├── services/         CAMADA DE REGRAS: consultas e regras de negócio
+│   │   │   │   └── revisoes.ts   listarRevisoes()
+│   │   │   ├── db/
+│   │   │   │   └── prisma.ts     Conexão única com o banco (PrismaClient)
+│   │   │   └── generated/prisma/ Cliente gerado pelo Prisma (NÃO vai pro Git)
+│   │   ├── prisma/
+│   │   │   ├── schema.prisma     Definição das tabelas
+│   │   │   ├── migrations/       Histórico de alterações do banco (SQL versionado)
+│   │   │   └── seed.ts           Dados iniciais (unidades, motivos, exemplos fictícios)
+│   │   ├── scripts/
+│   │   │   └── setup-db-local.ps1  Cria usuário e banco local e grava o .env
+│   │   ├── prisma.config.ts      Configuração do Prisma CLI
 │   │   ├── .env.example          Modelo das variáveis de ambiente (vai pro Git)
 │   │   ├── .env                  Valores reais locais (NÃO vai pro Git)
 │   │   ├── tsconfig.json         Configuração do TypeScript
@@ -114,10 +133,12 @@ gestao-pos-venda/
 | `dotenv` | Carrega o arquivo `.env` em `process.env` |
 | `typescript` | Tipagem estática: pega erros antes de rodar |
 | `tsx` | Roda TypeScript direto em desenvolvimento, com reinício automático |
+| `prisma` / `@prisma/client` (v7) | ORM: define as tabelas em `schema.prisma`, gera migrações SQL e um cliente TypeScript tipado |
+| `@prisma/adapter-pg` + `pg` | Driver que conecta o Prisma 7 ao PostgreSQL |
 
 ### Caminho de uma requisição
 ```
-GET /api/health
+GET /api/revisoes?pagina=1&porPagina=20
    │
    ▼
 server.ts  ── app.listen(3333)
@@ -126,26 +147,41 @@ server.ts  ── app.listen(3333)
 app.ts
    ├─ cors()            libera a origem http://localhost:5173
    ├─ express.json()    lê corpo JSON (para POST/PUT futuros)
-   ├─ /api/health  ───► routes/health.ts  ──► 200 { ok: true, ... }   ✔ respondeu
+   ├─ /api/health   ──► routes/health.ts  ──► 200 { ok: true }
+   ├─ /api/revisoes ──► routes/revisoes.ts           (valida pagina/porPagina)
+   │                      └─► services/revisoes.ts   (monta a consulta)
+   │                            └─► db/prisma.ts ──► PostgreSQL
+   │                      ◄── 200 { itens, total, pagina, ... }
    ├─ 404               (só chega aqui se nenhuma rota respondeu)
-   └─ tratador de erro  (qualquer exceção vira 500 com mensagem genérica)
+   └─ tratador de erro  (qualquer exceção, inclusive do banco, vira 500 genérico)
 ```
+
+### Banco de dados (Etapa 4)
+- **8 tabelas** definidas em [`prisma/schema.prisma`](../apps/api/prisma/schema.prisma): `unidades`, `usuarios`, `motivos`, `importacoes`, `clientes`, `veiculos`, `ordens_servico`, `revisoes_alvo`. O desenho completo está no [README, seção 3](../README.md#3-modelo-de-dados-rascunho).
+- **Chaves de negócio únicas:** `veiculos.chassi` (cruzamento com as OS) e `revisoes_alvo (veiculo_id, km)`, que impede a mesma revisão duas vezes na fila e acaba com as linhas repetidas da planilha.
+- **Índices** nas colunas mais filtradas: `ordens_servico.chassi`, `revisoes_alvo.situacao`, `operador_id` e `unidade_id`.
+- **Concorrência:** `revisoes_alvo.versao` prepara o *optimistic locking* da Etapa 8.
+- **Migrações versionadas:** cada mudança no schema vira uma pasta em `prisma/migrations/` com o SQL. Elas vão para o Git, para que qualquer máquina chegue ao mesmo banco.
+- **Usuário próprio:** a API conecta como `pos_venda` (dono só do banco do sistema), nunca como o administrador `postgres`.
+- **Seed idempotente:** usa `upsert`, então pode rodar várias vezes. Só tem dados fictícios.
 
 ### Decisões e boas práticas
 - **`app.ts` separado de `server.ts`:** permite testar o app sem abrir porta (Etapa 6, com `vitest` + `supertest`).
-- **Configuração centralizada (`config.ts`):** nenhum outro arquivo lê `process.env`. As variáveis ficam documentadas em `.env.example`.
+- **Configuração centralizada (`config.ts`):** no código da API, nenhum outro arquivo lê `process.env`. A exceção é o `prisma.config.ts`, que é do Prisma CLI. As variáveis ficam documentadas em `.env.example`, e as obrigatórias (`DATABASE_URL`) param a API na inicialização com uma mensagem clara.
+- **Conexão única com o banco (`db/prisma.ts`):** uma instância do PrismaClient para toda a API, evitando esgotar as conexões.
+- **A listagem devolve só o necessário:** `select` explícito, sem CPF, com paginação limitada a 100 itens.
 - **Segredos fora do Git:** `.env` está no `.gitignore`.
 - **Rotas em arquivos próprios (`routes/`):** cada assunto (revisões, importações, usuários) terá seu arquivo, montado em `app.ts`.
 - **Erros não vazam detalhes:** o cliente recebe "Erro interno do servidor", e o detalhe fica no log.
 - **ESM (`"type": "module"`):** padrão moderno do Node. Por isso os imports terminam em `.js`.
 
-### Como vai crescer
+### Camadas da API
 ```
 src/
-├── routes/        recebe a requisição HTTP e valida a entrada (zod)
-├── services/      regras de negócio (ex.: cruzamento por chassi)
-├── db/            acesso ao banco (Prisma)
-└── middlewares/   autenticação, permissões, log
+├── routes/        ✅ recebe a requisição HTTP e valida a entrada (zod a partir da Etapa 6)
+├── services/      ✅ regras de negócio (ex.: listagem; cruzamento por chassi na Etapa 6)
+├── db/            ✅ acesso ao banco (Prisma)
+└── middlewares/   ⏳ autenticação, permissões, log (Etapa 9)
 ```
 Regra: **rota fina, serviço gordo**. A rota só traduz HTTP; a regra de negócio fica no serviço, onde é fácil testar.
 
@@ -226,7 +262,7 @@ O Bootstrap usa `!default` nas variáveis, então as que definimos **antes** del
 
 | Etapa | O que entra na arquitetura |
 |---|---|
-| 4 | **PostgreSQL + Prisma** em `apps/api`: `prisma/schema.prisma` (tabelas), migrações e seed fictício |
+| ~~4~~ | ✅ PostgreSQL + Prisma: concluída (ver seção 3) |
 | 6 | Upload (`multer`), leitura de planilhas (`exceljs`, `csv-parse`), validação (`zod`), testes (`vitest`) |
 | 9 | Login (JWT ou sessão), middleware de permissões, tabela de auditoria |
 | 11 | Hospedagem da API e do frontend, backup do banco |

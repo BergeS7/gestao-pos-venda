@@ -59,13 +59,14 @@ Dentro de `apps/`:
 ---
 
 ## Etapa 4 — Banco de dados
-- [ ] Escolher como acessar o banco: **Prisma** (recomendado, mais simples) ou `pg` com SQL puro
-- [ ] `npm i @prisma/client` e `npm i -D prisma`, depois `npx prisma init`
-- [ ] Colocar `DATABASE_URL` no `.env`
-- [ ] Modelar as tabelas iniciais (ver README, seção 3): `unidades`, `usuarios`, `clientes`, `veiculos` (chassi único), `importacoes`, `ordens_servico`, `revisoes_alvo`, `motivos`
-- [ ] `npx prisma migrate dev` para criar as tabelas
-- [ ] *Seed*: as 3 unidades (STI, ZDC, BRT), os 11 motivos da planilha e uns 20 clientes/veículos **fictícios**
-- [ ] Rota `GET /api/revisoes` listando do banco
+- [x] PostgreSQL 18 instalado localmente (Windows, porta 5432)
+- [x] Script `scripts/setup-db-local.ps1` (`npm run db:setup`): cria o usuário `pos_venda` e o banco `gestao_pos_venda`, e grava `DATABASE_URL` no `.env`
+- [x] **Prisma 7.10.1** com `@prisma/adapter-pg` + `pg`; configuração em `prisma.config.ts`
+- [x] `prisma/schema.prisma` com as 8 tabelas: `unidades`, `usuarios`, `motivos`, `importacoes`, `clientes`, `veiculos` (chassi único), `ordens_servico`, `revisoes_alvo`
+- [x] Migração inicial `prisma/migrations/..._inicial` (`npm run db:migrate`)
+- [x] *Seed* (`npm run db:seed`, idempotente): 3 unidades, 11 motivos, 4 usuários e 20 clientes/motos/revisões **fictícios**
+- [x] Conexão única em `src/db/prisma.ts`; `DATABASE_URL` obrigatória em `config.ts`
+- [x] Rota `GET /api/revisoes` (rota → serviço → banco), com paginação e sem CPF na resposta
 
 **Pronto quando:** a rota devolve as revisões fictícias em JSON.
 

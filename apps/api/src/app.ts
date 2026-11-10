@@ -19,6 +19,7 @@ import express, { type NextFunction, type Request, type Response } from "express
 import cors from "cors";
 import { config } from "./config.js";
 import { healthRouter } from "./routes/health.js";
+import { revisoesRouter } from "./routes/revisoes.js";
 
 /** Instância da aplicação Express, exportada para o server.ts e para os testes. */
 export const app = express();
@@ -40,6 +41,8 @@ app.use(express.json());
 // sob um prefixo. Todas as rotas da API começam com /api.
 // ---------------------------------------------------------------------------
 app.use("/api/health", healthRouter);
+app.use("/api/revisoes", revisoesRouter);
+// (Express 5 já encaminha erros de rotas async para o tratador de erros abaixo)
 
 // ---------------------------------------------------------------------------
 // 3. Rota não encontrada (404)

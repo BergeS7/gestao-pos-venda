@@ -157,18 +157,35 @@ git clone https://github.com/BergeS7/gestao-pos-venda.git
 cd gestao-pos-venda
 ```
 
-Pré-requisitos: Node.js 20+, Git e PostgreSQL 15+ (ou Supabase). O passo a passo completo está no [ROTEIRO.md](ROTEIRO.md).
+Pré-requisitos: Node.js 20+, Git e PostgreSQL 15+ (testado com o 18). O passo a passo completo está no [ROTEIRO.md](ROTEIRO.md).
+
+> **Windows / PowerShell:** se aparecer *"a execução de scripts foi desabilitada neste sistema"*, use `npm.cmd` no lugar de `npm` (ex.: `npm.cmd run dev`). Outra opção é liberar scripts locais só para o seu usuário com `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`, que é uma decisão sua de segurança.
 
 ### API (`apps/api`)
+
+**Primeira vez:**
 
 ```bash
 cd apps/api
 npm install
 cp .env.example .env
+npm run db:setup
+npm run db:migrate
+npm run db:seed
+```
+
+- `db:setup` cria o usuário e o banco no PostgreSQL local e grava a `DATABASE_URL` no `.env`. Ele pede a senha do usuário `postgres` definida na instalação.
+- `db:migrate` cria as tabelas.
+- `db:seed` insere unidades, motivos e dados **fictícios** de exemplo.
+
+**No dia a dia:**
+
+```bash
+cd apps/api
 npm run dev
 ```
 
-Abra <http://localhost:3333/api/health>. Deve aparecer `{ "ok": true, ... }`.
+Teste em <http://localhost:3333/api/health> e <http://localhost:3333/api/revisoes>.
 
 | Script | O que faz |
 |---|---|
@@ -176,6 +193,18 @@ Abra <http://localhost:3333/api/health>. Deve aparecer `{ "ok": true, ... }`.
 | `npm run build` | Compila o TypeScript para `dist/` |
 | `npm start` | Roda a versão compilada |
 | `npm run typecheck` | Confere os tipos sem compilar |
+| `npm run db:setup` | Cria o banco local e o usuário do sistema (uma vez) |
+| `npm run db:migrate` | Aplica as migrações e, se o schema mudou, cria uma nova |
+| `npm run db:seed` | Insere os dados iniciais (pode rodar de novo, não duplica) |
+| `npm run db:studio` | Abre o Prisma Studio: tela no navegador para ver e editar o banco |
+| `npm run db:generate` | Gera o cliente TypeScript do Prisma (roda sozinho no `npm install`) |
+
+**Rotas da API**
+
+| Método e rota | Descrição |
+|---|---|
+| `GET /api/health` | Verifica se a API está no ar |
+| `GET /api/revisoes?pagina=1&porPagina=20` | Fila de revisões com veículo, cliente, unidade e operadora (máximo de 100 por página) |
 
 ### Frontend (`apps/web`)
 
@@ -199,7 +228,7 @@ Abra <http://localhost:5173>. O Dashboard deve mostrar **API ok**. O Vite encami
 O tema fica em `src/styles/`: as cores da marca estão em `_variables.scss` e o layout em `_layout.scss`.
 
 ### ⚠️ Dados sensíveis
-As planilhas em `Documentos/` têm **nome, CPF e celular de clientes reais**. A pasta está no `.gitignore` e **nunca** deve ir para o GitHub. Para desenvolver, use só dados fictícios em `db/seed/`.
+As planilhas em `Documentos/` têm **nome, CPF e celular de clientes reais**. A pasta está no `.gitignore` e **nunca** deve ir para o GitHub. Para desenvolver, use só os dados fictícios do seed (`apps/api/prisma/seed.ts`).
 
 ---
 

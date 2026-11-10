@@ -1,0 +1,238 @@
+// =============================================================================
+// schema.prisma — Modelo de dados do Sistema de Gestão do Pós-Venda
+//
+// Cada `model` vira uma tabela no PostgreSQL. Depois de alterar este arquivo:
+//   npx prisma migrate dev --name descricao-da-mudanca
+// Isso gera uma migração (SQL versionado em prisma/migrations/) e atualiza o
+// cliente TypeScript usado pela API.
+//
+// Convenções:
+//  - Modelos e campos em português, no padrão do TypeScript (PascalCase/camelCase);
+//  - @@map / @map dão nomes em snake_case às tabelas e colunas no banco;
+//  - Todo registro tem criadoEm/atualizadoEm para rastreabilidade.
+//
+// Regras de negócio de origem: docs/regras-de-negocio.md
+// Tabelas que entram depois: tentativas_contato (Etapa 8) e auditoria (Etapa 9).
+// =============================================================================
+
+generator client {
+  // Gerador novo do Prisma 7: gera o cliente como código TypeScript na pasta abaixo
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  // Formato de módulos compatível com o "type": "module" do package.json
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+  // A URL de conexão fica em prisma.config.ts (lida do .env)
+}
+
+// -----------------------------------------------------------------------------
+// Enumerações (listas fixas de valores)
+// -----------------------------------------------------------------------------
+
+/// Perfis de acesso (README, seção 2.5)
+enum Perfil {
+  OPERADORA
+  GESTOR
+  DIRETORIA
+  ADMIN
+}
+
+/// Tipo do arquivo importado do Cloud
+enum TipoImportacao {
+  REVISOES // "LISTA DE REVISOES" — clientes com revisão prevista
+  ESPELHAMENTO // "ESPELHAMENTO" — ordens de serviço já abertas
+}
+
+/// Ciclo de vida de uma importação: primeiro é gerada uma prévia, depois confirmada
+enum StatusImportacao {
+  PREVIA
+  CONFIRMADA
+  CANCELADA
+}
+
+/// Situação de uma revisão na fila de ligações (docs/regras-de-negocio.md, seção 4)
+enum SituacaoRevisao {
+  PENDENTE // ainda não houve contato
+  RETORNAR // ligar de novo (retornar depois / km não atingida)
+  AGENDADO // cliente agendou a revisão
+  NAO_AGENDADO // falou e não agendou (mecânico de confiança, distante...)
+  BUSCAR_CONTATO // telefone não funciona: procurar outro contato
+  CONCLUIDA // revisão efetivada na oficina
+}
+
+// -----------------------------------------------------------------------------
+// Tabelas de apoio
+// -----------------------------------------------------------------------------
+
+/// Unidades da concessionária (STI = Santa Inês, ZDC = Zé Doca, BRT = Buriticupu)
+model Unidade {
+  id    Int    @id @default(autoincrement())
+  sigla String @unique @db.VarChar(10)
+  nome  String @db.VarChar(100)
+
+  usuarios Usuario[]
+  revisoes RevisaoAlvo[]
+
+  @@map("unidades")
+}
+
+/// Pessoas que usam o sistema (operadoras, gestores...). Login entra na Etapa 9.
+model Usuario {
+  id           Int      @id @default(autoincrement())
+  nome         String   @db.VarChar(120)
+  email        String   @unique @db.VarChar(160)
+  /// Hash da senha (bcrypt). Nulo até a Etapa 9.
+  senhaHash    String?  @map("senha_hash")
+  perfil       Perfil   @default(OPERADORA)
+  unidadeId    Int?     @map("unidade_id")
+  ativo        Boolean  @default(true)
+  criadoEm     DateTime @default(now()) @map("criado_em")
+  atualizadoEm DateTime @updatedAt @map("atualizado_em")
+
+  unidade     Unidade?      @relation(fields: [unidadeId], references: [id])
+  importacoes Importacao[]
+  /// Revisões atribuídas a este usuário (como operadora)
+  revisoes    RevisaoAlvo[]
+
+  @@map("usuarios")
+}
+
+/// Motivos de não agendamento — lista oficial da planilha (docs/regras-de-negocio.md)
+model Motivo {
+  id             Int     @id @default(autoincrement())
+  descricao      String  @unique @db.VarChar(120)
+  /// true = encerra o cliente nesta revisão (ex.: "Se desfez da moto");
+  /// false = gera novo contato (ex.: "Retornar depois")
+  encerraCliente Boolean @default(true) @map("encerra_cliente")
+  ativo          Boolean @default(true)
+
+  @@map("motivos")
+}
+
+// -----------------------------------------------------------------------------
+// Importação dos arquivos do Cloud
+// -----------------------------------------------------------------------------
+
+/// Registro de cada arquivo importado (histórico de importações)
+model Importacao {
+  id             Int              @id @default(autoincrement())
+  tipo           TipoImportacao
+  /// Nome original do arquivo enviado
+  arquivo        String           @db.VarChar(255)
+  /// Período de referência (ex.: mês de venda). Formato livre até a Etapa 6.
+  periodoRef     String?          @map("periodo_ref") @db.VarChar(20)
+  totalLinhas    Int              @default(0) @map("total_linhas")
+  totalValidos   Int              @default(0) @map("total_validos")
+  totalInvalidos Int              @default(0) @map("total_invalidos")
+  status         StatusImportacao @default(PREVIA)
+  usuarioId      Int?             @map("usuario_id")
+  criadoEm       DateTime         @default(now()) @map("criado_em")
+
+  usuario       Usuario?       @relation(fields: [usuarioId], references: [id])
+  ordensServico OrdemServico[]
+  revisoes      RevisaoAlvo[]
+
+  @@map("importacoes")
+}
+
+// -----------------------------------------------------------------------------
+// Clientes e veículos
+// -----------------------------------------------------------------------------
+
+/// Cliente (pessoa física ou jurídica) que comprou a moto
+model Cliente {
+  id           Int      @id @default(autoincrement())
+  nome         String   @db.VarChar(160)
+  /// CPF/CNPJ só com números. Único quando informado.
+  cpfCnpj      String?  @unique @map("cpf_cnpj") @db.VarChar(14)
+  /// Celular só com números (DDD + número)
+  celular      String?  @db.VarChar(15)
+  /// Município sem o sufixo "/MA" (normalizado na importação)
+  municipio    String?  @db.VarChar(100)
+  criadoEm     DateTime @default(now()) @map("criado_em")
+  atualizadoEm DateTime @updatedAt @map("atualizado_em")
+
+  veiculos Veiculo[]
+
+  @@map("clientes")
+}
+
+/// Moto vendida. O CHASSI é a chave do cruzamento com as ordens de serviço.
+model Veiculo {
+  id           Int       @id @default(autoincrement())
+  /// 17 caracteres, maiúsculo, sem espaços
+  chassi       String    @unique @db.Char(17)
+  modelo       String    @db.VarChar(80)
+  cor          String?   @db.VarChar(60)
+  dataVenda    DateTime? @map("data_venda")
+  clienteId    Int       @map("cliente_id")
+  criadoEm     DateTime  @default(now()) @map("criado_em")
+  atualizadoEm DateTime  @updatedAt @map("atualizado_em")
+
+  cliente  Cliente       @relation(fields: [clienteId], references: [id])
+  revisoes RevisaoAlvo[]
+
+  @@map("veiculos")
+}
+
+/// Ordem de serviço vinda do "ESPELHAMENTO". Se o chassi tem OS, a revisão já foi feita.
+/// Sem chave estrangeira para Veiculo: o espelhamento traz chassis que podem
+/// não estar cadastrados (ex.: motos vendidas em outras concessionárias).
+model OrdemServico {
+  id                Int      @id @default(autoincrement())
+  chassi            String   @db.Char(17)
+  /// Ex.: "1ª REVISÃO EXPRESSO", "REVISÃO PERIÓDICA - VOLANTE"
+  tipoOs            String   @map("tipo_os") @db.VarChar(80)
+  codigoAssistencia String?  @map("codigo_assistencia") @db.VarChar(20)
+  importacaoId      Int      @map("importacao_id")
+  criadoEm          DateTime @default(now()) @map("criado_em")
+
+  importacao Importacao @relation(fields: [importacaoId], references: [id])
+
+  /// Índice: o cruzamento procura OS pelo chassi
+  @@index([chassi])
+  @@map("ordens_servico")
+}
+
+// -----------------------------------------------------------------------------
+// Fila de revisões
+// -----------------------------------------------------------------------------
+
+/// Uma revisão a ser trabalhada: um veículo + uma quilometragem (1000, 6000, 12000, 18000).
+/// Substitui as linhas repetidas da planilha: cada nova tentativa de contato
+/// vira histórico (Etapa 8), não uma linha nova.
+model RevisaoAlvo {
+  id             Int             @id @default(autoincrement())
+  veiculoId      Int             @map("veiculo_id")
+  /// Revisão alvo em km. Valores válidos (validados na API): 1000, 6000, 12000, 18000
+  km             Int
+  situacao       SituacaoRevisao @default(PENDENTE)
+  unidadeId      Int?            @map("unidade_id")
+  /// Operadora responsável pela ligação
+  operadorId     Int?            @map("operador_id")
+  importacaoId   Int?            @map("importacao_id")
+  dataAgendada   DateTime?       @map("data_agendada")
+  proximoContato DateTime?       @map("proximo_contato")
+  /// Revisão efetivada na oficina
+  concluida      Boolean         @default(false)
+  /// Controle de concorrência (optimistic locking): só grava se a versão não mudou
+  versao         Int             @default(1)
+  criadoEm       DateTime        @default(now()) @map("criado_em")
+  atualizadoEm   DateTime        @updatedAt @map("atualizado_em")
+
+  veiculo    Veiculo     @relation(fields: [veiculoId], references: [id])
+  unidade    Unidade?    @relation(fields: [unidadeId], references: [id])
+  operador   Usuario?    @relation(fields: [operadorId], references: [id])
+  importacao Importacao? @relation(fields: [importacaoId], references: [id])
+
+  /// Um veículo não pode ter a mesma revisão duas vezes na fila
+  @@unique([veiculoId, km])
+  /// Índices para os filtros mais usados da fila
+  @@index([situacao])
+  @@index([operadorId])
+  @@index([unidadeId])
+  @@map("revisoes_alvo")
+}

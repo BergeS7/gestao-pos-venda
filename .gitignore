@@ -29,3 +29,6 @@ Thumbs.db
 ~$*
 .vscode/*
 !.vscode/extensions.json
+
+# Cliente do Prisma gerado automaticamente (npm run db:generate)
+apps/api/src/generated/

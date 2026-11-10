@@ -29,4 +29,25 @@ export const config = {
 
   /** Ambiente de execução: "development" ou "production". */
   nodeEnv: process.env.NODE_ENV ?? "development",
+
+  /**
+   * URL de conexão com o PostgreSQL. Obrigatória: sem ela a API não sobe.
+   * Localmente é criada por scripts/setup-db-local.ps1.
+   */
+  databaseUrl: obrigatoria("DATABASE_URL"),
 };
+
+/**
+ * Lê uma variável de ambiente obrigatória. Se ela faltar, encerra com uma
+ * mensagem clara já na inicialização, em vez de falhar depois, no meio de
+ * uma requisição.
+ */
+function obrigatoria(nome: string): string {
+  const valor = process.env[nome];
+  if (!valor) {
+    throw new Error(
+      `Variável de ambiente ${nome} não definida. Confira o arquivo apps/api/.env (modelo em .env.example).`,
+    );
+  }
+  return valor;
+}
