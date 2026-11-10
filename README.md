@@ -278,6 +278,7 @@ As planilhas em `Documentos/` têm **nome, CPF e celular de clientes reais**. A 
 ---
 
 ## 7. Documentos de referência
+- [CONTRIBUTING.md](CONTRIBUTING.md): como contribuir (padrões de código, commits, documentação e segurança dos dados)
 - [docs/arquitetura.md](docs/arquitetura.md): como o sistema está organizado (pastas, camadas, padrões)
 - [docs/regras-de-negocio.md](docs/regras-de-negocio.md): lógica extraída das planilhas
 - [docs/apresentacao-proposta.pptx](docs/apresentacao-proposta.pptx): proposta apresentada à diretoria
