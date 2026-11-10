@@ -161,6 +161,39 @@ Pré-requisitos: Node.js 20+, Git e PostgreSQL 15+ (testado com o 18). O passo a
 
 > **Windows / PowerShell:** se aparecer *"a execução de scripts foi desabilitada neste sistema"*, use `npm.cmd` no lugar de `npm` (ex.: `npm.cmd run dev`). Outra opção é liberar scripts locais só para o seu usuário com `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`, que é uma decisão sua de segurança.
 
+### ⚡ Rodar tudo com um comando (raiz do projeto)
+
+**Primeira vez:**
+
+```bash
+npm install
+cp apps/api/.env.example apps/api/.env
+npm run db:setup
+npm run db:migrate
+npm run db:seed
+```
+
+O `npm install` na raiz já instala também as dependências de `apps/api` e `apps/web`.
+
+**No dia a dia:**
+
+```bash
+npm run dev
+```
+
+Esse comando sobe **a API (porta 3333) e o frontend (porta 5173) juntos**, no mesmo terminal. Os logs aparecem com o prefixo `[api]` (vermelho) ou `[web]` (azul). Abra <http://localhost:5173>. `Ctrl + C` para os dois.
+
+| Script (raiz) | O que faz |
+|---|---|
+| `npm run dev` | Sobe API e frontend juntos (usa o pacote `concurrently`) |
+| `npm run dev:api` / `npm run dev:web` | Sobe só um dos dois |
+| `npm run install:all` | Instala as dependências dos dois apps (roda sozinho após `npm install`) |
+| `npm run build` | Compila a API e gera a versão de produção do frontend |
+| `npm run check` | Conferência antes do commit: typecheck da API, lint e build do frontend |
+| `npm run db:setup` / `db:migrate` / `db:seed` / `db:studio` | Atalhos para os comandos de banco da API |
+
+Os comandos de cada app continuam funcionando dentro das pastas deles, conforme abaixo.
+
 ### API (`apps/api`)
 
 **Primeira vez:**

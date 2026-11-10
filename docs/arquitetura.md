@@ -116,6 +116,7 @@ gestao-pos-venda/
 │   ├── paleta-de-cores.txt
 │   └── apresentacao-proposta.pptx
 ├── Documentos/                   Planilhas REAIS (ignorada pelo Git, tem CPF/telefone)
+├── package.json                  Scripts da raiz: "npm run dev" sobe API + web juntos (concurrently)
 ├── README.md                     Visão geral e como rodar
 ├── ROTEIRO.md                    Checklist de desenvolvimento por etapas
 └── .gitignore                    O que nunca vai para o GitHub
@@ -252,7 +253,8 @@ O Bootstrap usa `!default` nas variáveis, então as que definimos **antes** del
 | Comentários | Todo arquivo começa com um cabeçalho dizendo **o que é e por que existe**. Funções e tipos exportados têm JSDoc (`/** ... */`) |
 | Nomes de arquivo | Componentes React em `PascalCase.tsx`; demais em `camelCase.ts`; parciais Sass com `_` |
 | Commits | Um commit por etapa ou item, no formato `tipo(escopo): descrição`: `feat` (novidade), `fix` (correção), `refactor`, `docs` |
-| Antes de commitar | `npm run typecheck` (api), `npm run build` e `npm run lint` (web) sem erros |
+| Antes de commitar | `npm run check` na raiz (typecheck da API, lint e build do frontend) sem erros |
+| Rodar em desenvolvimento | `npm run dev` na raiz sobe API e frontend juntos. Cada app continua independente, com seu próprio `package.json` |
 | Dados | **Só dados fictícios** no código, seeds e testes. As planilhas reais ficam em `Documentos/` (ignorada) |
 | Segredos | Só no `.env` (ignorado). Toda variável nova é documentada no `.env.example` |
 

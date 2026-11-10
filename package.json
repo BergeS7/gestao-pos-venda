@@ -1,0 +1,31 @@
+{
+  "name": "gestao-pos-venda",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sistema de Gestão do Pós-Venda — Maranhão Motos (monorepo: apps/api + apps/web)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BergeS7/gestao-pos-venda.git"
+  },
+  "author": "BergeS7",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "concurrently --names api,web --prefix-colors red,blue --kill-others-on-fail \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "npm --prefix apps/api run dev",
+    "dev:web": "npm --prefix apps/web run dev",
+    "postinstall": "npm run install:all",
+    "install:all": "npm install --prefix apps/api && npm install --prefix apps/web",
+    "build": "npm --prefix apps/api run build && npm --prefix apps/web run build",
+    "check": "npm --prefix apps/api run typecheck && npm --prefix apps/web run lint && npm --prefix apps/web run build",
+    "db:setup": "npm --prefix apps/api run db:setup",
+    "db:migrate": "npm --prefix apps/api run db:migrate",
+    "db:seed": "npm --prefix apps/api run db:seed",
+    "db:studio": "npm --prefix apps/api run db:studio"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.7"
+  }
+}
