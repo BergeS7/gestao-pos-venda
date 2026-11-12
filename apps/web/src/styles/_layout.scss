@@ -159,6 +159,30 @@
   }
 }
 
+// ---------- Fila de revisões (pages/Revisoes.tsx) ----------
+.tabela-fila {
+  // Coluna estreita da caixa de seleção
+  .col-check {
+    width: 2.5rem;
+  }
+
+  th {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: $mm-cinza-escuro;
+    white-space: nowrap;
+  }
+}
+
+// Barra de ações em lote: fica "grudada" no topo ao rolar a lista
+.barra-selecao {
+  position: sticky;
+  top: calc(#{$topbar-height} + 0.5rem);
+  z-index: 1010;
+  border-left: 4px solid $primary !important;
+}
+
 // ---------- Cards de indicador ----------
 // Usados no Dashboard: rótulo, valor grande e ícone vermelho à direita
 .kpi-card {

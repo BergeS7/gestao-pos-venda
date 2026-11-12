@@ -108,12 +108,14 @@ Frontend:
 ---
 
 ## Etapa 7 — Fila de revisões (carteira)
-- [ ] Gerar `revisoes_alvo` (um registro por chassi + km) a partir dos elegíveis de uma importação confirmada
-- [ ] Definir a unidade (STI, ZDC ou BRT) conforme a regra validada na etapa 5
-- [ ] Rota de listagem com busca, filtros (unidade, operadora, km, situação, mês de venda) e paginação
-- [ ] Tela com tabela Bootstrap, filtros e *badges* coloridos por situação
-- [ ] Distribuir clientes entre colaboradores (atribuir responsável)
-- [ ] Botão **Exportar** (gera CSV ou XLSX)
+- [ ] Gerar `revisoes_alvo` (um registro por chassi + km) a partir dos elegíveis de uma importação confirmada. *Depende da Etapa 6 (importação).*
+- [ ] Definir a unidade (STI, ZDC ou BRT) conforme a regra validada na etapa 5. *Depende das respostas da equipe (Etapa 5).*
+- [x] Rota de listagem com busca (nome, chassi, celular), filtros (unidade, operadora ou "sem operadora", km, situação, mês de venda) e paginação, validada com `zod`
+- [x] Tela com tabela Bootstrap, filtros guardados na URL e *badges* coloridos por situação
+- [x] Distribuir clientes entre colaboradores: atribuir em lote (`PATCH /api/revisoes/atribuir`) e dividir em partes iguais (`POST /api/revisoes/distribuir`)
+- [x] Botão **Exportar** (CSV para Excel: `;`, acentos e sem CPF)
+
+> Os dois itens abertos são feitos junto com a Etapa 6, quando a fila passar a nascer da importação. Até lá, a fila usa os dados fictícios do seed.
 
 **Pronto quando:** a carteira aparece filtrável e dá para atribuir responsáveis.
 

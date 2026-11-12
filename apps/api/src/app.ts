@@ -18,8 +18,10 @@
 import express, { type NextFunction, type Request, type Response } from "express";
 import cors from "cors";
 import { config } from "./config.js";
+import { ErroHttp } from "./lib/erros.js";
 import { healthRouter } from "./routes/health.js";
 import { revisoesRouter } from "./routes/revisoes.js";
+import { catalogosRouter } from "./routes/catalogos.js";
 
 /** Instância da aplicação Express, exportada para o server.ts e para os testes. */
 export const app = express();
@@ -42,6 +44,7 @@ app.use(express.json());
 // ---------------------------------------------------------------------------
 app.use("/api/health", healthRouter);
 app.use("/api/revisoes", revisoesRouter);
+app.use("/api", catalogosRouter); // /api/unidades, /api/operadoras, /api/motivos
 // (Express 5 já encaminha erros de rotas async para o tratador de erros abaixo)
 
 // ---------------------------------------------------------------------------
@@ -55,11 +58,22 @@ app.use((_req: Request, res: Response) => {
 // ---------------------------------------------------------------------------
 // 4. Tratamento de erros
 // O Express reconhece este middleware pelos 4 parâmetros (err, req, res, next).
-// Qualquer erro lançado numa rota cai aqui. O detalhe vai para o log do
-// servidor, e o cliente recebe só uma mensagem genérica, sem expor
-// informações internas.
+// Qualquer erro lançado numa rota cai aqui:
+//  - ErroHttp (lib/erros.ts): erro "esperado", culpa da requisição (400, 404...).
+//    A mensagem é segura para o usuário e vai na resposta.
+//  - JSON malformado no corpo: o express.json() lança um erro com status 400.
+//  - Qualquer outro: erro inesperado. O detalhe vai só para o log do servidor,
+//    e o cliente recebe uma mensagem genérica, sem expor informações internas.
 // ---------------------------------------------------------------------------
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  if (err instanceof ErroHttp) {
+    res.status(err.status).json({ error: err.message, detalhes: err.detalhes });
+    return;
+  }
+  if ((err as { type?: string }).type === "entity.parse.failed") {
+    res.status(400).json({ error: "Corpo da requisição não é um JSON válido" });
+    return;
+  }
   console.error(err);
   res.status(500).json({ error: "Erro interno do servidor" });
 });

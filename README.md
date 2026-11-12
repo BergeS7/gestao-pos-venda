@@ -252,7 +252,15 @@ Teste em <http://localhost:3333/api/health> e <http://localhost:3333/api/revisoe
 | Método e rota | Descrição |
 |---|---|
 | `GET /api/health` | Verifica se a API está no ar |
-| `GET /api/revisoes?pagina=1&porPagina=20` | Fila de revisões com veículo, cliente, unidade e operadora (máximo de 100 por página) |
+| `GET /api/revisoes` | Fila de revisões com veículo, cliente, unidade e operadora. Aceita `busca`, `unidade`, `operador` (id ou `sem`), `km`, `situacao`, `mesVenda` (AAAA-MM), `pagina` e `porPagina` (máximo 100) |
+| `GET /api/revisoes/exportar` | Baixa a fila filtrada em CSV (mesmos filtros, até 20.000 linhas, sem CPF) |
+| `PATCH /api/revisoes/atribuir` | Corpo `{ ids, operadorId }`: passa as revisões para uma operadora (`null` tira a operadora) |
+| `POST /api/revisoes/distribuir` | Corpo `{ operadorIds, filtros }`: divide em partes iguais as revisões sem operadora do filtro |
+| `GET /api/unidades` | Unidades (STI, ZDC, BRT) |
+| `GET /api/operadoras` | Operadoras ativas (sem e-mail) |
+| `GET /api/motivos` | Motivos de não agendamento |
+
+Dados inválidos respondem **400** no formato `{ "error": "...", "detalhes": { "campos": { ... } } }`.
 
 ### Frontend (`apps/web`)
 
