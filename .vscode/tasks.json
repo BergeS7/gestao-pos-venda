@@ -1,0 +1,51 @@
+// Tarefas do VS Code: atalhos para os comandos do projeto.
+// Rodar: Ctrl+Shift+B (tarefa padrão = "Iniciar sistema")
+//    ou: Ctrl+Shift+P → "Tasks: Run Task" → escolher a tarefa.
+// Todas usam o cmd para não esbarrar no bloqueio de scripts do PowerShell.
+{
+  "version": "2.0.0",
+  "options": {
+    "shell": { "executable": "cmd.exe", "args": ["/d", "/c"] }
+  },
+  "tasks": [
+    {
+      "label": "Iniciar sistema (API + web)",
+      "detail": "npm run dev — sobe a API (3333) e o frontend (5173) juntos",
+      "type": "shell",
+      "command": "npm run dev",
+      "isBackground": true,
+      "problemMatcher": [],
+      "group": { "kind": "build", "isDefault": true },
+      "presentation": { "panel": "dedicated", "reveal": "always", "clear": true }
+    },
+    {
+      "label": "Conferir antes do commit",
+      "detail": "npm run check — tipos da API, lint e build do frontend",
+      "type": "shell",
+      "command": "npm run check",
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "Banco: abrir Prisma Studio",
+      "detail": "npm run db:studio — ver e editar os dados no navegador",
+      "type": "shell",
+      "command": "npm run db:studio",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Banco: aplicar migrações",
+      "detail": "npm run db:migrate",
+      "type": "shell",
+      "command": "npm run db:migrate",
+      "problemMatcher": []
+    },
+    {
+      "label": "Banco: rodar seed",
+      "detail": "npm run db:seed — dados fictícios de exemplo",
+      "type": "shell",
+      "command": "npm run db:seed",
+      "problemMatcher": []
+    }
+  ]
+}

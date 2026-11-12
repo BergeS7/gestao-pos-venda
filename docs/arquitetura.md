@@ -116,6 +116,7 @@ gestao-pos-venda/
 │   ├── paleta-de-cores.txt
 │   └── apresentacao-proposta.pptx
 ├── Documentos/                   Planilhas REAIS (ignorada pelo Git, tem CPF/telefone)
+├── .vscode/                      Configuração do VS Code: terminal cmd, tarefas e extensões
 ├── package.json                  Scripts da raiz: "npm run dev" sobe API + web juntos (concurrently)
 ├── README.md                     Visão geral e como rodar
 ├── CONTRIBUTING.md               Guia de contribuição (padrões, commits, segurança)

@@ -194,6 +194,21 @@ Esse comando sobe **a API (porta 3333) e o frontend (porta 5173) juntos**, no me
 
 Os comandos de cada app continuam funcionando dentro das pastas deles, conforme abaixo.
 
+### 🧩 No VS Code
+
+1. **Abra a pasta do projeto:** *Arquivo → Abrir Pasta…* → `gestao-pos-venda`. Ou, num terminal, rode `code gestao-pos-venda`.
+2. **Inicie o sistema:** `Ctrl + Shift + B` roda a tarefa **"Iniciar sistema (API + web)"**.
+   - Ou abra o terminal (`` Ctrl + ` ``) e rode `npm run dev`.
+3. Abra <http://localhost:5173>. Para parar, clique no terminal e pressione `Ctrl + C` (ou use o ícone de lixeira do terminal).
+
+O projeto já vem configurado em `.vscode/`:
+
+| Arquivo | O que faz |
+|---|---|
+| `settings.json` | Terminal padrão = **Prompt de Comando (cmd)**, onde `npm` funciona sem o bloqueio do PowerShell. Também ativa formatar ao salvar |
+| `tasks.json` | Atalhos em *Ctrl+Shift+P → Tasks: Run Task*: iniciar sistema, conferir antes do commit, Prisma Studio, migrações e seed |
+| `extensions.json` | Extensões recomendadas (Prisma, oxlint, Prettier, Sass, corretor pt-BR). O VS Code sugere instalar ao abrir |
+
 ### API (`apps/api`)
 
 **Primeira vez:**

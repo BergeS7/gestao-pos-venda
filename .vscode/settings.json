@@ -1,0 +1,26 @@
+// Configurações do VS Code válidas SÓ para este projeto (workspace).
+// O VS Code aceita comentários neste arquivo (formato JSONC).
+{
+  // Terminal padrão = Prompt de Comando (cmd) no Windows.
+  // Motivo: o PowerShell bloqueia o "npm" (npm.ps1) quando a execução de
+  // scripts está desabilitada. No cmd, "npm run dev" funciona direto.
+  "terminal.integrated.defaultProfile.windows": "Command Prompt",
+
+  // Usa o TypeScript instalado no projeto (mesma versão do build), não o do VS Code
+  "typescript.tsdk": "apps/web/node_modules/typescript/lib",
+
+  // Formatação e limpeza ao salvar
+  "editor.formatOnSave": true,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+
+  // Esconde da busca pastas geradas automaticamente
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "apps/api/src/generated": true
+  },
+
+  // Formatador de cada tipo de arquivo
+  "[prisma]": { "editor.defaultFormatter": "Prisma.prisma" }
+}
