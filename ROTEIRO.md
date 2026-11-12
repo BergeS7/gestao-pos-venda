@@ -158,12 +158,13 @@ Frontend:
 
 ## Etapa 10 — Dashboard
 Reproduzir o relatório mensal de produção que hoje é feito à mão:
-- [ ] Tabela **operadora × unidade**: total de clientes, conseguiu falar, não conseguiu, agendados, concluídos
-- [ ] Rankings: % contato (falou ÷ total), % agendamento (agendados ÷ falou), % conclusão (concluídos ÷ agendados)
-- [ ] % concluídos da base por unidade
-- [ ] Causas de "falou e não agendou" por operadora × unidade, com %
-- [ ] Gráficos com `react-chartjs-2` (ou Recharts) e filtros por mês, unidade e operadora
-- [ ] Exportar o relatório em Excel
+- [x] Tabela **operadora × unidade**: total de clientes, conseguiu falar, não conseguiu, agendados, concluídos
+- [x] Rankings: % contato (falou ÷ total), % agendamento (agendados ÷ falou), % conclusão (concluídos ÷ agendados). Clicar no título da coluna ordena
+- [x] % concluídos da base por unidade
+- [x] Causas de "falou e não agendou" por operadora × unidade, com %
+- [x] Gráficos com `react-chartjs-2` e filtros por mês, unidade e operadora (guardados na URL)
+- [x] Exportar o relatório em Excel (`exceljs`, 4 abas, sem dados de clientes)
+- [x] Regra do mês documentada em [docs/regras-de-negocio.md](docs/regras-de-negocio.md) (seção 5.1) e conferida com um mês fictício feito à mão (`npm run test` em `apps/api`)
 
 **Pronto quando:** o relatório de um mês fictício bate com o cálculo feito à mão.
 

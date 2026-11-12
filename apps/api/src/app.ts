@@ -22,6 +22,7 @@ import { config } from "./config.js";
 import { ErroHttp } from "./lib/erros.js";
 import { healthRouter } from "./routes/health.js";
 import { revisoesRouter } from "./routes/revisoes.js";
+import { relatoriosRouter } from "./routes/relatorios.js";
 import { catalogosRouter } from "./routes/catalogos.js";
 import { authRouter } from "./routes/auth.js";
 import { auditoriaRouter, usuariosRouter } from "./routes/usuarios.js";
@@ -64,6 +65,7 @@ if (config.nodeEnv === "production") app.set("trust proxy", 1);
 app.use("/api/health", healthRouter); // aberta: usada para saber se a API está no ar
 app.use("/api/auth", authRouter); // aberta: login, logout, quem sou eu, trocar senha
 app.use("/api/revisoes", exigirLogin, revisoesRouter);
+app.use("/api/relatorios", exigirLogin, relatoriosRouter); // Dashboard e Excel (Etapa 10)
 app.use("/api/usuarios", exigirLogin, exigirPerfil(Perfil.ADMIN), usuariosRouter);
 app.use("/api/auditoria", exigirLogin, exigirPerfil(Perfil.ADMIN), auditoriaRouter);
 app.use("/api", exigirLogin, catalogosRouter); // /api/unidades, /api/operadoras, /api/motivos

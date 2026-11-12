@@ -77,17 +77,22 @@ gestao-pos-venda/
 │   │   │   │   ├── auth.ts       Login, logout, "quem sou eu", trocar senha
 │   │   │   │   ├── revisoes.ts   Fila: listar, exportar, atribuir, distribuir; tela do cliente
 │   │   │   │   ├── usuarios.ts   Cadastro de usuários e auditoria (só Admin)
+│   │   │   │   ├── relatorios.ts Relatório de produção em JSON e em Excel (Etapa 10)
 │   │   │   │   └── catalogos.ts  GET /api/unidades, /operadoras, /motivos
 │   │   │   ├── schemas/          VALIDAÇÃO: formato aceito em cada rota (zod)
 │   │   │   │   ├── auth.ts       Login e regra de senha
 │   │   │   │   ├── usuarios.ts   Criar, alterar, redefinir senha
 │   │   │   │   ├── revisoes.ts   Filtros, paginação, atribuir e distribuir
+│   │   │   │   ├── relatorios.ts Filtros do relatório: mês, unidade, operadora
 │   │   │   │   └── atendimentos.ts  Registrar contato (validação condicional) e concluir
 │   │   │   ├── services/         CAMADA DE REGRAS: consultas e regras de negócio
 │   │   │   │   ├── auth.ts       Conferir senha, bloquear tentativas, trocar senha
 │   │   │   │   ├── usuarios.ts   Cadastro; nunca ficar sem Admin; desativar libera a carteira
 │   │   │   │   ├── auditoria.ts  Grava e lista "quem alterou o quê e quando"
 │   │   │   │   ├── revisoes.ts   Filtros, paginação, atribuição e distribuição
+│   │   │   │   ├── relatorios.ts Relatório mensal: regra do mês e contagens (cálculo puro)
+│   │   │   │   ├── relatorios.test.ts Confere o relatório com um mês fictício feito à mão
+│   │   │   │   ├── relatoriosExcel.ts Monta o .xlsx de 4 abas (exceljs)
 │   │   │   │   └── atendimentos.ts  Tentativas, situação da revisão, proteção contra sobrescrita
 │   │   │   ├── lib/              Utilitários sem regra de negócio
 │   │   │   │   ├── erros.ts      ErroHttp: erro com código HTTP
@@ -133,6 +138,7 @@ gestao-pos-venda/
 │           │   ├── Paginacao.tsx "1–20 de N" com anterior/próxima
 │           │   ├── revisoes/     Peças da fila: filtros, tabela, painel Distribuir
 │           │   ├── atendimentos/ Formulário "Registrar contato" e histórico
+│           │   ├── dashboard/    Cards, gráficos (funil e causas) e tabelas de produção
 │           │   └── usuarios/     Formulário de usuário, senha provisória, auditoria
 │           ├── hooks/
 │           │   └── useDebounce.ts Espera parar de digitar antes de buscar
@@ -141,11 +147,12 @@ gestao-pos-venda/
 │           │   ├── api.ts        Funções para chamar a API + tipos das respostas
 │           │   ├── permissoes.ts O que cada perfil pode fazer (espelha a API)
 │           │   ├── senhas.ts     Regra de senha e gerador de senha provisória
-│           │   └── formatar.ts   Datas, celular, km, plural e cores das situações
+│           │   ├── graficos.ts   Peças do Chart.js e cores dos gráficos
+│           │   └── formatar.ts   Datas, celular, km, plural, %, mês e cores das situações
 │           └── styles/
 │               ├── main.scss     Junta tudo, na ordem certa
 │               ├── _variables.scss  Cores e fontes da marca (tema do Bootstrap)
-│               └── _layout.scss  Estilos próprios (menu, topo, cards)
+│               └── _layout.scss  Estilos próprios (menu, topo, cards, gráficos, tabelas)
 │
 ├── docs/                         Documentação
 │   ├── arquitetura.md            (este arquivo)
@@ -258,13 +265,20 @@ Toda chamada seguinte: o navegador manda o cookie sozinho
 - **Limites na memória:** o contador de tentativas de login fica na memória da API, o que basta para um servidor. Com vários servidores, levar para o banco ou para o Redis.
 - **A tela só esconde; quem protege é a API:** `lib/permissoes.ts` do frontend espelha as regras para esconder menus e botões, mas a segurança está nos middlewares.
 
+### Relatório de produção (Etapa 10)
+- **Cálculo puro, separado do banco:** `relatorioProducao()` só busca as ligações do mês; quem conta é `montarRelatorio()`, uma função que recebe uma lista e devolve o relatório. Assim o teste [`relatorios.test.ts`](../apps/api/src/services/relatorios.test.ts) confere o resultado com um mês feito à mão, sem banco (`npm run test`, com o `node:test` que já vem no Node).
+- **Conta no código, não no SQL:** um mês tem poucos milhares de ligações, então buscar e somar em TypeScript é rápido e muito mais fácil de ler e testar. Se um dia ficar lento, o mesmo cálculo pode virar uma consulta SQL agrupada.
+- **Mês no horário do Maranhão:** `intervaloDoMes("2026-10")` vai de 01/10 03:00 UTC a 01/11 03:00 UTC (UTC−3, sem horário de verão).
+- **Excel no servidor** (`services/relatoriosExcel.ts` → `exceljs`): as taxas vão como número com formato `0.0%`, para quem abrir poder ordenar e somar. Só contagens, nenhum dado de cliente.
+- **Operadora só vê os próprios números:** como na fila, a rota troca o filtro `operador` pelo id dela.
+
 ### Camadas da API
 ```
 src/
 ├── routes/        ✅ recebe a requisição HTTP e responde
 ├── middleware/    ✅ login (401) e perfil (403) — Etapa 9
 ├── schemas/       ✅ formato aceito em cada rota (zod)
-├── services/      ✅ regras de negócio (filtros, distribuição, usuários, auditoria; cruzamento por chassi na Etapa 6)
+├── services/      ✅ regras de negócio (filtros, distribuição, usuários, auditoria, relatório; cruzamento por chassi na Etapa 6)
 ├── lib/           ✅ utilitários: erros, validação, CSV, formatos, senhas, tokens
 └── db/            ✅ acesso ao banco (Prisma)
 ```
@@ -284,6 +298,7 @@ Regra: **rota fina, serviço gordo**. A rota só traduz HTTP; a regra de negóci
 | `sass` | Pré-processador CSS: variáveis, aninhamento, mixins |
 | `vite` | Servidor de desenvolvimento e build |
 | `oxlint` | Verifica problemas no código (`npm run lint`) |
+| `chart.js` + `react-chartjs-2` | Gráficos do Dashboard (Etapa 10). Peças registradas em `lib/graficos.ts` |
 
 ### Como a tela é montada
 ```
@@ -310,11 +325,13 @@ index.html
 
 ### Fluxo de dados (exemplo: Dashboard)
 ```
-Dashboard abre
-  → useEffect chama apiGet<Health>('/health')       (lib/api.ts)
-  → fetch('/api/health') → proxy do Vite → API
-  → resposta vira estado: 'carregando' → 'ok' | 'erro'
-  → a tela re-renderiza: "API ok" ou o aviso de erro
+Dashboard abre (/dashboard?mes=2026-10&unidade=STI)
+  → lê os filtros da URL (useSearchParams)
+  → useEffect chama apiGet<Relatorio>('/relatorios/producao?mes=...')   (lib/api.ts)
+  → fetch → proxy do Vite → API → services/relatorios.ts → banco
+  → resposta vira estado { chave, relatorio }; trocar o filtro cancela a
+    chamada antiga (AbortController) e mostra o relatório anterior apagado
+  → cards, gráficos (Chart.js) e tabelas re-renderizam
 ```
 
 ### Tema (Sass + Bootstrap)
@@ -358,10 +375,11 @@ O Bootstrap usa `!default` nas variáveis, então as que definimos **antes** del
 | Etapa | O que entra na arquitetura |
 |---|---|
 | ~~4~~ | ✅ PostgreSQL + Prisma: concluída (ver seção 3) |
-| 6 | Upload (`multer`), leitura de planilhas (`exceljs`, `csv-parse`), testes (`vitest`). O `zod` já entrou na Etapa 7 |
+| 6 | Upload (`multer`), leitura de planilhas (`exceljs` já instalado na Etapa 10, `csv-parse`). O `zod` já entrou na Etapa 7 |
 | ~~7~~ | ✅ Fila de revisões: `schemas/`, `lib/`, rotas de catálogo, atribuir, distribuir e exportar |
 | ~~8~~ | ✅ Atendimentos: `tentativas_contato`, tela do cliente, proteção contra sobrescrita (409) |
 | ~~9~~ | ✅ Login (JWT em cookie `httpOnly`), `middleware/auth.ts`, perfis, tela de Usuários, tabela `auditoria` |
+| ~~10~~ | ✅ Dashboard: `services/relatorios.ts` (cálculo puro + testes com `node:test`), Excel com `exceljs`, gráficos com Chart.js |
 | 11 | Hospedagem da API e do frontend, backup do banco |
 
 Modelo de dados planejado: [README.md, seção 3](../README.md#3-modelo-de-dados-rascunho).

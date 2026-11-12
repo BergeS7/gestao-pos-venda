@@ -77,7 +77,9 @@ Reproduz o relatório de produção atual, mas calculado automaticamente:
 - Por **operadora × unidade**: total de clientes, conseguiu falar, não conseguiu, agendados, concluídos.
 - Rankings: **% contato** (falou ÷ total), **% agendamento** (agendados ÷ falou), **% conclusão** (concluídos ÷ agendados), **% concluídos da base por unidade**.
 - **Causas de não agendamento** por operadora × unidade, com %.
-- Filtros por mês, unidade e operadora.
+- Filtros por mês, unidade e operadora; exportação em Excel.
+- Cada cliente (revisão) conta uma vez no mês, mesmo com várias ligações. A regra completa está em [docs/regras-de-negocio.md, seção 5.1](docs/regras-de-negocio.md).
+- A operadora vê só os próprios números.
 
 ### 2.5 Usuários e permissões
 | Perfil | Pode |
@@ -223,7 +225,7 @@ Esse comando sobe **a API (porta 3333) e o frontend (porta 5173) juntos**, no me
 | `npm run dev:api` / `npm run dev:web` | Sobe só um dos dois |
 | `npm run install:all` | Instala as dependências dos dois apps (roda sozinho após `npm install`) |
 | `npm run build` | Compila a API e gera a versão de produção do frontend |
-| `npm run check` | Conferência antes do commit: typecheck da API, lint e build do frontend |
+| `npm run check` | Conferência antes do commit: typecheck e testes da API, lint e build do frontend |
 | `npm run db:setup` / `db:migrate` / `db:seed` / `db:studio` | Atalhos para os comandos de banco da API |
 
 Os comandos de cada app continuam funcionando dentro das pastas deles, conforme abaixo.
@@ -280,6 +282,7 @@ Teste em <http://localhost:3333/api/health>. As outras rotas exigem login (a res
 | `npm run db:seed` | Insere os dados iniciais (pode rodar de novo, não duplica) |
 | `npm run db:studio` | Abre o Prisma Studio: tela no navegador para ver e editar o banco |
 | `npm run db:generate` | Gera o cliente TypeScript do Prisma (roda sozinho no `npm install`) |
+| `npm run test` | Testes automáticos (hoje: o relatório de produção conferido com um mês feito à mão). Não precisa de banco |
 
 **Rotas da API**
 
@@ -301,6 +304,8 @@ Todas as rotas, menos `/api/health` e `/api/auth/*`, exigem login. Sem login a r
 | `GET /api/revisoes/exportar` | Baixa a fila filtrada em CSV (mesmos filtros, até 20.000 linhas, sem CPF) |
 | `PATCH /api/revisoes/atribuir` | Corpo `{ ids, operadorId }`: passa as revisões para uma operadora (`null` tira a operadora) |
 | `POST /api/revisoes/distribuir` | Corpo `{ operadorIds, filtros }`: divide em partes iguais as revisões sem operadora do filtro |
+| `GET /api/relatorios/producao` | Relatório mensal de produção (Dashboard). Aceita `mes` (AAAA-MM, padrão: mês atual), `unidade` e `operador`. A operadora recebe só os próprios números |
+| `GET /api/relatorios/producao/exportar` | O mesmo relatório em Excel (`producao-AAAA-MM.xlsx`, 4 abas, só contagens) |
 | `GET /api/unidades` | Unidades (STI, ZDC, BRT) |
 | `GET /api/operadoras` | Operadoras ativas (sem e-mail) |
 | `GET /api/motivos` | Motivos de não agendamento, com a `acao` de cada um |
@@ -320,7 +325,7 @@ npm install
 npm run dev
 ```
 
-Abra <http://localhost:5173> e entre com um dos usuários de teste. O Dashboard deve mostrar **API ok**. O Vite encaminha as chamadas `/api` para a porta 3333, então tela e API ficam no mesmo endereço e o cookie de sessão funciona sem configuração extra.
+Abra <http://localhost:5173> e entre com um dos usuários de teste. O Dashboard abre com o relatório do mês atual (vazio enquanto não houver ligações registradas). O Vite encaminha as chamadas `/api` para a porta 3333, então tela e API ficam no mesmo endereço e o cookie de sessão funciona sem configuração extra.
 
 | Script | O que faz |
 |---|---|

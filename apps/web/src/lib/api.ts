@@ -294,3 +294,42 @@ export function codigoDoErro(erro: unknown): string | undefined {
   if (!(erro instanceof ErroApi)) return undefined
   return (erro.detalhes as { codigo?: string } | undefined)?.codigo
 }
+
+// ---------------------------------------------------------------------------
+// Relatório de produção (Etapa 10) — espelha services/relatorios.ts da API
+// ---------------------------------------------------------------------------
+
+/** Números de uma linha do relatório e as taxas (0 a 1; null = divisor zero). */
+export type Contagem = {
+  total: number
+  falou: number
+  naoFalou: number
+  agendados: number
+  concluidos: number
+  /** falou ÷ total */
+  taxaContato: number | null
+  /** agendados ÷ falou */
+  taxaAgendamento: number | null
+  /** concluídos ÷ agendados */
+  taxaConclusao: number | null
+  /** concluídos ÷ total */
+  taxaConcluidosBase: number | null
+}
+
+/** Operadora no relatório (id null = ligação sem autor registrado). */
+export type OperadoraRelatorio = { id: number | null; nome: string }
+
+/** Unidade no relatório. */
+export type UnidadeRelatorio = { sigla: string; nome: string }
+
+/** Relatório mensal de produção (GET /api/relatorios/producao). */
+export type Relatorio = {
+  /** AAAA-MM */
+  mes: string
+  linhas: (Contagem & { operadora: OperadoraRelatorio; unidade: UnidadeRelatorio })[]
+  porUnidade: (Contagem & { unidade: UnidadeRelatorio })[]
+  porOperadora: (Contagem & { operadora: OperadoraRelatorio })[]
+  total: Contagem
+  causas: { operadora: OperadoraRelatorio; unidade: UnidadeRelatorio; motivo: string; quantidade: number }[]
+  causasResumo: { motivo: string; quantidade: number; percentual: number }[]
+}

@@ -88,3 +88,24 @@ export function plural(qtd: number, singular: string, pluralTexto: string): stri
 export function kmBR(km: number): string {
   return `${km.toLocaleString('pt-BR')} km`
 }
+
+/** Taxa (0 a 1) como porcentagem com 1 casa: 0.256 → "25,6%". null → "—". */
+export function porcentagem(valor: number | null | undefined): string {
+  if (valor === null || valor === undefined) return '—'
+  return valor.toLocaleString('pt-BR', { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1 })
+}
+
+/** Número inteiro com separador de milhar: 1234 → "1.234". */
+export function numeroBR(valor: number): string {
+  return valor.toLocaleString('pt-BR')
+}
+
+/** "2026-10" → "outubro de 2026". */
+export function mesPorExtenso(mes: string): string {
+  const [ano, m] = mes.split('-').map(Number)
+  return new Date(Date.UTC(ano, m - 1, 15)).toLocaleDateString('pt-BR', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  })
+}

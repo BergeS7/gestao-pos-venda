@@ -8,7 +8,7 @@
 //   media-breakpoint-down(lg) → telas menores que 992px (tablet/celular)
 // Componentes que usam estas classes: components/Layout.tsx, PageHeader.tsx,
 // pages/Dashboard.tsx, pages/Revisoes.tsx, pages/RevisaoDetalhe.tsx,
-// pages/Login.tsx e pages/TrocarSenha.tsx.
+// pages/Login.tsx, pages/TrocarSenha.tsx e components/dashboard/ (Etapa 10).
 // =============================================================================
 
 // ---------- Estrutura geral ----------
@@ -256,6 +256,43 @@
   .kpi-icon {
     font-size: 1.5rem;
     color: $primary;
+  }
+
+  // Taxa embaixo do número (ex.: "40,0% de quem falou")
+  .kpi-detalhe {
+    font-size: 0.78rem;
+    color: $mm-cinza-escuro;
+  }
+}
+
+// ---------- Dashboard (Etapa 10): gráficos e tabelas de produção ----------
+// O Chart.js ocupa a altura do contêiner (maintainAspectRatio: false)
+.grafico {
+  position: relative;
+  height: 280px;
+}
+
+// Tabelas de números: algarismos de largura igual, para as colunas alinharem
+.tabela-producao {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.875rem;
+
+  th {
+    font-size: 0.78rem;
+    color: $mm-cinza-escuro;
+    white-space: nowrap;
+
+    // Ícone de ordenar colado ao título, para a tabela caber sem rolar
+    .bi {
+      margin-left: 0.15rem !important;
+      font-size: 0.7rem;
+    }
+  }
+
+  // Linha do total: traço mais forte em cima. Feito com sombra (e não com
+  // border) porque a borda maior faria a tabela "vazar" 1px e mostrar barra de rolagem.
+  tfoot td {
+    box-shadow: inset 0 1px 0 $border-color;
   }
 }
 

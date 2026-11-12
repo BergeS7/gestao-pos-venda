@@ -19,7 +19,7 @@
     "postinstall": "npm run install:all",
     "install:all": "npm install --prefix apps/api && npm install --prefix apps/web",
     "build": "npm --prefix apps/api run build && npm --prefix apps/web run build",
-    "check": "npm --prefix apps/api run typecheck && npm --prefix apps/web run lint && npm --prefix apps/web run build",
+    "check": "npm --prefix apps/api run typecheck && npm --prefix apps/api run test && npm --prefix apps/web run lint && npm --prefix apps/web run build",
     "db:setup": "npm --prefix apps/api run db:setup",
     "db:migrate": "npm --prefix apps/api run db:migrate",
     "db:seed": "npm --prefix apps/api run db:seed",

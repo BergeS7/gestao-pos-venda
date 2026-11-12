@@ -168,6 +168,25 @@ Também há um bloco "agendados no mês X, concluídos no mês X+1": a conclusã
 
 > No sistema, todos esses números saem direto do banco, com filtro de mês, unidade e operadora.
 
+### 5.1 Como o sistema conta o mês (Etapa 10)
+
+A planilha não deixa escrito como cada número é contado. O sistema usa a regra abaixo; ela está no código em `apps/api/src/services/relatorios.ts` e é conferida pelo teste `relatorios.test.ts`. Se a equipe contar de outro jeito, a mudança fica num lugar só (ver as perguntas da seção 7).
+
+| Número | Como é contado no mês |
+|---|---|
+| **Total de clientes** | Revisões (moto + km) com pelo menos uma ligação registrada no mês. Três ligações para o mesmo cliente contam **1**. |
+| **Conseguiu falar** | Dessas, as que tiveram alguma ligação no mês com "Conseguiu falar = sim". |
+| **Não conseguiu** | Total − conseguiu falar. |
+| **Agendados** | As que tiveram alguma ligação no mês com "Agendou = sim". |
+| **Concluídos** | Das agendadas no mês, as que já foram feitas na oficina, mesmo que a conclusão caia no mês seguinte (o bloco "agendados no mês X, concluídos no X+1"). Por isso o número de um mês pode subir depois. |
+| **Operadora** | Quem registrou a **última** ligação do mês para aquela revisão. Cada revisão cai numa linha só e a soma das operadoras dá o total. |
+| **Unidade** | A unidade da revisão. |
+| **Causa** (falou e não agendou) | O motivo da última ligação do mês em que a operadora falou com o cliente. A soma das causas é igual a "conseguiu falar − agendados". |
+
+O mês vai do dia 1 às 00:00 ao último dia às 23:59, no horário do Maranhão (UTC−3).
+
+**Exemplo** (o mesmo do teste): a revisão R7 teve duas ligações em outubro, "Muito distante" no dia 8 e "Mecânico de confiança" no dia 20. Conta 1 cliente, falou, não agendou, causa "Mecânico de confiança". A revisão R6 recebeu ligação da Ana e depois da Bia, que agendou: conta para a Bia.
+
 ---
 
 ## 6. Oportunidades para o sistema
@@ -192,3 +211,7 @@ Também há um bloco "agendados no mês X, concluídos no mês X+1": a conclusã
 - [ ] (Etapa 9) Ao **desativar** uma operadora, as revisões abertas dela voltam para "sem operadora". Está certo, ou devem ir direto para outra pessoa?
 - [ ] (Etapa 9) Login de 10 horas e senha de 8+ caracteres com letras e números atendem à TI da empresa?
 - [ ] A lista de revisões é gerada uma vez por mês? Com qual filtro de data de venda?
+- [ ] (Etapa 10) No relatório, o cliente conta no mês **da ligação** (regra da seção 5.1). Na planilha atual é assim, ou conta no mês da lista de revisões (mês de venda)?
+- [ ] (Etapa 10) Quando duas operadoras ligam para o mesmo cliente no mês, ele conta para **quem fez a última ligação**. Está certo?
+- [ ] (Etapa 10) "Concluídos" hoje são os agendados no mês que já vieram à oficina (em qualquer data). A planilha conta assim, ou conta quem veio à oficina **dentro** do mês?
+- [ ] (Etapa 10) "Retornar depois" depois de falar com o cliente entra como causa de "falou e não agendou"? Hoje entra.
