@@ -184,6 +184,7 @@ Também há um bloco "agendados no mês X, concluídos no mês X+1": a conclusã
 - [ ] O que significa cada **Código Assistência Técnica**? Quais são da Maranhão Motos?
 - [ ] O que é "EXTERNO - PACOTE"?
 - [ ] Como a unidade (STI, ZDC, BRT) é definida: pelo município, pela loja da venda ou outro critério?
-- [ ] "Sem cond financeira" e "Em abstenção" encerram o cliente ou viram retorno futuro?
+- [ ] "Sem cond financeira" e "Em abstenção" encerram o cliente ou viram retorno futuro? (Hoje estão como **encerrar** no seed; mudar é só trocar a `acao` do motivo.)
+- [ ] Na Etapa 8, o sistema só aceita "Agendou = sim" quando "Conseguiu falar = sim". Existe agendamento sem falar com o cliente (ex.: resposta por WhatsApp registrada depois)?
 - [ ] Depois de quantas tentativas sem sucesso o cliente sai da fila?
 - [ ] A lista de revisões é gerada uma vez por mês? Com qual filtro de data de venda?

@@ -18,7 +18,7 @@
  */
 
 import { prisma } from "../src/db/prisma.js";
-import { Perfil, SituacaoRevisao } from "../src/generated/prisma/client.js";
+import { AcaoMotivo, Perfil, SituacaoRevisao } from "../src/generated/prisma/client.js";
 
 // ---------------------------------------------------------------------------
 // Dados de apoio (reais, não pessoais)
@@ -33,21 +33,24 @@ const UNIDADES = [
 
 /**
  * Motivos de não agendamento (docs/regras-de-negocio.md, seção 4).
- * encerraCliente=false: o cliente volta para a fila (novo contato).
+ * `acao` diz para onde a revisão vai quando a ligação termina com o motivo:
+ *   RETORNAR       → volta para a fila com nova data de contato;
+ *   BUSCAR_CONTATO → o telefone não funciona, procurar outro;
+ *   ENCERRAR       → o cliente sai da fila nesta revisão.
  * Pendente de confirmação com a equipe: "Sem condição financeira" e "Em abstenção".
  */
 const MOTIVOS = [
-  { descricao: "Retornar depois", encerraCliente: false },
-  { descricao: "Km não atingida", encerraCliente: false },
-  { descricao: "Contato não funciona (buscar)", encerraCliente: false },
-  { descricao: "Mecânico de confiança", encerraCliente: true },
-  { descricao: "Em abstenção", encerraCliente: true },
-  { descricao: "Se desfez da moto", encerraCliente: true },
-  { descricao: "Moto revenda (em nome de terceiros)", encerraCliente: true },
-  { descricao: "Sem condição financeira", encerraCliente: true },
-  { descricao: "Muito distante", encerraCliente: true },
-  { descricao: "Realiza em outra autorizada", encerraCliente: true },
-  { descricao: "Acha caro e serviço simples", encerraCliente: true },
+  { descricao: "Retornar depois", acao: AcaoMotivo.RETORNAR },
+  { descricao: "Km não atingida", acao: AcaoMotivo.RETORNAR },
+  { descricao: "Contato não funciona (buscar)", acao: AcaoMotivo.BUSCAR_CONTATO },
+  { descricao: "Mecânico de confiança", acao: AcaoMotivo.ENCERRAR },
+  { descricao: "Em abstenção", acao: AcaoMotivo.ENCERRAR },
+  { descricao: "Se desfez da moto", acao: AcaoMotivo.ENCERRAR },
+  { descricao: "Moto revenda (em nome de terceiros)", acao: AcaoMotivo.ENCERRAR },
+  { descricao: "Sem condição financeira", acao: AcaoMotivo.ENCERRAR },
+  { descricao: "Muito distante", acao: AcaoMotivo.ENCERRAR },
+  { descricao: "Realiza em outra autorizada", acao: AcaoMotivo.ENCERRAR },
+  { descricao: "Acha caro e serviço simples", acao: AcaoMotivo.ENCERRAR },
 ];
 
 // ---------------------------------------------------------------------------
@@ -119,7 +122,7 @@ async function main() {
   for (const m of MOTIVOS) {
     await prisma.motivo.upsert({
       where: { descricao: m.descricao },
-      update: { encerraCliente: m.encerraCliente },
+      update: { acao: m.acao },
       create: m,
     });
   }

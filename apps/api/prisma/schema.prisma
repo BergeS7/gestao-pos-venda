@@ -12,7 +12,7 @@
 //  - Todo registro tem criadoEm/atualizadoEm para rastreabilidade.
 //
 // Regras de negócio de origem: docs/regras-de-negocio.md
-// Tabelas que entram depois: tentativas_contato (Etapa 8) e auditoria (Etapa 9).
+// Tabela que entra depois: auditoria (Etapa 9).
 // =============================================================================
 
 generator client {
@@ -63,6 +63,20 @@ enum SituacaoRevisao {
   CONCLUIDA // revisão efetivada na oficina
 }
 
+/// O que acontece com a revisão depois de um "não agendou" com este motivo
+enum AcaoMotivo {
+  RETORNAR // ligar de novo mais tarde (ex.: "Retornar depois", "Km não atingida")
+  BUSCAR_CONTATO // o telefone não funciona: procurar outro contato
+  ENCERRAR // o cliente sai da fila nesta revisão (ex.: "Se desfez da moto")
+}
+
+/// Resposta da pergunta "Agendou?" da planilha
+enum ResultadoContato {
+  SIM // agendou a revisão
+  NAO // não agendou (o motivo diz se encerra ou se volta para a fila)
+  RETORNAR // pediu para ligar depois
+}
+
 // -----------------------------------------------------------------------------
 // Tabelas de apoio
 // -----------------------------------------------------------------------------
@@ -96,18 +110,22 @@ model Usuario {
   importacoes Importacao[]
   /// Revisões atribuídas a este usuário (como operadora)
   revisoes    RevisaoAlvo[]
+  /// Ligações registradas por este usuário
+  tentativas  TentativaContato[]
 
   @@map("usuarios")
 }
 
 /// Motivos de não agendamento — lista oficial da planilha (docs/regras-de-negocio.md)
 model Motivo {
-  id             Int     @id @default(autoincrement())
-  descricao      String  @unique @db.VarChar(120)
-  /// true = encerra o cliente nesta revisão (ex.: "Se desfez da moto");
-  /// false = gera novo contato (ex.: "Retornar depois")
-  encerraCliente Boolean @default(true) @map("encerra_cliente")
-  ativo          Boolean @default(true)
+  id        Int        @id @default(autoincrement())
+  descricao String     @unique @db.VarChar(120)
+  /// Para onde a revisão vai quando a ligação termina com este motivo
+  /// (substituiu o antigo campo encerra_cliente na Etapa 8)
+  acao      AcaoMotivo @default(ENCERRAR)
+  ativo     Boolean    @default(true)
+
+  tentativas TentativaContato[]
 
   @@map("motivos")
 }
@@ -214,8 +232,10 @@ model RevisaoAlvo {
   /// Operadora responsável pela ligação
   operadorId     Int?            @map("operador_id")
   importacaoId   Int?            @map("importacao_id")
-  dataAgendada   DateTime?       @map("data_agendada")
-  proximoContato DateTime?       @map("proximo_contato")
+  /// Só a data (sem hora): o dia em que o cliente vem à oficina
+  dataAgendada   DateTime?       @map("data_agendada") @db.Date
+  /// Só a data (sem hora): quando ligar de novo
+  proximoContato DateTime?       @map("proximo_contato") @db.Date
   /// Revisão efetivada na oficina
   concluida      Boolean         @default(false)
   /// Controle de concorrência (optimistic locking): só grava se a versão não mudou
@@ -227,6 +247,8 @@ model RevisaoAlvo {
   unidade    Unidade?    @relation(fields: [unidadeId], references: [id])
   operador   Usuario?    @relation(fields: [operadorId], references: [id])
   importacao Importacao? @relation(fields: [importacaoId], references: [id])
+  /// Histórico de ligações desta revisão (Etapa 8)
+  tentativas TentativaContato[]
 
   /// Um veículo não pode ter a mesma revisão duas vezes na fila
   @@unique([veiculoId, km])
@@ -235,4 +257,37 @@ model RevisaoAlvo {
   @@index([operadorId])
   @@index([unidadeId])
   @@map("revisoes_alvo")
+}
+
+// -----------------------------------------------------------------------------
+// Atendimentos (Etapa 8)
+// -----------------------------------------------------------------------------
+
+/// Uma ligação (ou mensagem) feita para o cliente sobre uma revisão.
+/// Na planilha, cada nova tentativa virava uma linha repetida; aqui ela vira
+/// histórico da mesma revisão. Registros são só acrescentados, nunca editados.
+model TentativaContato {
+  id             Int              @id @default(autoincrement())
+  revisaoId      Int              @map("revisao_id")
+  /// Quem registrou. Até o login (Etapa 9), é a operadora responsável pela revisão.
+  usuarioId      Int?             @map("usuario_id")
+  /// "Conseguiu falar?" da planilha
+  conseguiuFalar Boolean          @map("conseguiu_falar")
+  /// "Agendou?" da planilha
+  resultado      ResultadoContato
+  /// Obrigatório quando resultado = NAO ou RETORNAR (validado na API)
+  motivoId       Int?             @map("motivo_id")
+  /// Obrigatória quando resultado = SIM
+  dataAgendada   DateTime?        @map("data_agendada") @db.Date
+  proximoContato DateTime?        @map("proximo_contato") @db.Date
+  observacoes    String?          @db.VarChar(1000)
+  criadoEm       DateTime         @default(now()) @map("criado_em")
+
+  revisao RevisaoAlvo @relation(fields: [revisaoId], references: [id])
+  usuario Usuario?    @relation(fields: [usuarioId], references: [id])
+  motivo  Motivo?     @relation(fields: [motivoId], references: [id])
+
+  /// Índice: a tela do cliente busca as tentativas de uma revisão, da mais nova para a mais antiga
+  @@index([revisaoId, criadoEm])
+  @@map("tentativas_contato")
 }

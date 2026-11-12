@@ -102,17 +102,28 @@ clientes          (id, nome, cpf_cnpj, celular, municipio)
 veiculos          (id, chassi UNIQUE, modelo, cor, data_venda, cliente_id)
 ordens_servico    (id, chassi, tipo_os, codigo_assistencia, importacao_id)
 revisoes_alvo     (id, veiculo_id, km [1000|6000|12000|18000], importacao_id,
-                   unidade_id, operador_id, situacao, proximo_contato,
+                   unidade_id, operador_id, situacao, data_agendada, proximo_contato,
                    concluida, versao, UNIQUE(veiculo_id, km))
-tentativas_contato(id, revisao_alvo_id, usuario_id, data_contato, conseguiu_falar,
-                   agendou [sim|nao|retornar], motivo_id, data_agendada, observacoes)
-motivos           (id, descricao, encerra_cliente BOOLEAN, ativo)
+tentativas_contato(id, revisao_id, usuario_id, criado_em, conseguiu_falar,
+                   resultado [sim|nao|retornar], motivo_id, data_agendada,
+                   proximo_contato, observacoes)
+motivos           (id, descricao, acao [retornar|buscar_contato|encerrar], ativo)
 auditoria         (id, usuario_id, entidade, entidade_id, acao, antes, depois, criado_em)
 ```
 
 **Situação de `revisoes_alvo`:** `pendente` → `retornar` | `agendado` | `nao_agendado` | `buscar_contato` → `concluida`.
 
 A coluna `versao` permite *optimistic locking*: uma gravação feita sobre uma versão antiga é bloqueada e o usuário é avisado.
+
+**Como cada ligação muda a situação** (regra em `apps/api/src/services/atendimentos.ts`):
+
+| Agendou? | Ação do motivo | Nova situação |
+|---|---|---|
+| Sim | — | `agendado` (com data agendada) |
+| Retornar | qualquer | `retornar` (com próximo contato) |
+| Não | retornar (ex.: "Km não atingida") | `retornar` (com próximo contato) |
+| Não | buscar contato | `buscar_contato` |
+| Não | encerrar (ex.: "Se desfez da moto") | `nao_agendado` |
 
 ---
 
@@ -258,9 +269,12 @@ Teste em <http://localhost:3333/api/health> e <http://localhost:3333/api/revisoe
 | `POST /api/revisoes/distribuir` | Corpo `{ operadorIds, filtros }`: divide em partes iguais as revisões sem operadora do filtro |
 | `GET /api/unidades` | Unidades (STI, ZDC, BRT) |
 | `GET /api/operadoras` | Operadoras ativas (sem e-mail) |
-| `GET /api/motivos` | Motivos de não agendamento |
+| `GET /api/motivos` | Motivos de não agendamento, com a `acao` de cada um |
+| `GET /api/revisoes/:id` | Tela do cliente: a revisão com o histórico de contatos |
+| `POST /api/revisoes/:id/tentativas` | Registra uma ligação. Corpo `{ versao, conseguiuFalar, resultado, motivoId?, dataAgendada?, proximoContato?, observacoes? }`, datas em `AAAA-MM-DD` |
+| `PATCH /api/revisoes/:id/concluir` | Corpo `{ versao, concluida }`: marca como feita na oficina ou reabre |
 
-Dados inválidos respondem **400** no formato `{ "error": "...", "detalhes": { "campos": { ... } } }`.
+Dados inválidos respondem **400** no formato `{ "error": "...", "detalhes": { "campos": { ... } } }`. Quando outra pessoa alterou a revisão antes (versão diferente), a resposta é **409** com `detalhes.codigo = "VERSAO_DESATUALIZADA"`, e nada é gravado.
 
 ### Frontend (`apps/web`)
 

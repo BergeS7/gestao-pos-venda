@@ -122,13 +122,16 @@ Frontend:
 ---
 
 ## Etapa 8 — Atendimentos
-- [ ] Tabela `tentativas_contato` (cada ligação vira uma tentativa, não uma linha nova)
-- [ ] Tela do cliente: dados do veículo e linha do tempo das tentativas
-- [ ] Formulário igual ao da planilha: **Conseguiu falar?** (sim/não), **Agendou?** (sim/não/retornar), **Motivo**, **Data agendada**, **Próximo contato**, Observações
-- [ ] Validação condicional: motivo obrigatório se *não* ou *retornar*; data agendada obrigatória se *sim*
-- [ ] Atualizar a situação da revisão (`agendado`, `retornar`, `nao_agendado`, `buscar_contato`)
-- [ ] Marcar a revisão como **concluída**, primeiro à mão e depois pelo espelhamento do mês seguinte
-- [ ] **Proteção contra sobrescrita:** gravar só se a `versao` não mudou; se mudou, avisar o usuário
+- [x] Tabela `tentativas_contato` (cada ligação vira uma tentativa, não uma linha nova)
+- [x] Tela do cliente (`/revisoes/:id`): dados do cliente e da moto, atalhos para ligar e WhatsApp, linha do tempo das tentativas
+- [x] Formulário igual ao da planilha: **Conseguiu falar?** (sim/não), **Agendou?** (sim/não/retornar), **Motivo**, **Data agendada**, **Próximo contato**, Observações
+- [x] Validação condicional: motivo obrigatório se *não* ou *retornar*; data agendada obrigatória se *sim*; próximo contato obrigatório quando a revisão volta para a fila; só agenda quem falou com o cliente
+- [x] Atualizar a situação da revisão (`agendado`, `retornar`, `nao_agendado`, `buscar_contato`), conforme a **ação do motivo** (`motivos.acao`)
+- [x] Marcar a revisão como **concluída** à mão (e reabrir)
+- [ ] Concluir automaticamente pelo espelhamento do mês seguinte. *Depende da Etapa 6 (importação).*
+- [x] **Proteção contra sobrescrita:** gravar só se a `versao` não mudou; se mudou, responder 409, avisar o usuário e oferecer "Recarregar" sem perder o que foi digitado
+
+> Testado em duas abas: a segunda gravação é bloqueada com aviso, e o contato da primeira aparece depois de recarregar.
 
 **Pronto quando:** em duas abas ao mesmo tempo, a segunda gravação é bloqueada com aviso em vez de apagar a primeira.
 

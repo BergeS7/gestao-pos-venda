@@ -72,17 +72,20 @@ gestao-pos-venda/
 │   │   │   ├── config.ts         Lê o .env e expõe as configurações tipadas
 │   │   │   ├── routes/           CAMADA HTTP: lê a requisição e responde
 │   │   │   │   ├── health.ts     GET /api/health
-│   │   │   │   ├── revisoes.ts   Fila: listar, exportar, atribuir, distribuir
+│   │   │   │   ├── revisoes.ts   Fila: listar, exportar, atribuir, distribuir; tela do cliente
 │   │   │   │   └── catalogos.ts  GET /api/unidades, /operadoras, /motivos
 │   │   │   ├── schemas/          VALIDAÇÃO: formato aceito em cada rota (zod)
-│   │   │   │   └── revisoes.ts   Filtros, paginação, atribuir e distribuir
+│   │   │   │   ├── revisoes.ts   Filtros, paginação, atribuir e distribuir
+│   │   │   │   └── atendimentos.ts  Registrar contato (validação condicional) e concluir
 │   │   │   ├── services/         CAMADA DE REGRAS: consultas e regras de negócio
-│   │   │   │   └── revisoes.ts   Filtros, paginação, atribuição e distribuição
+│   │   │   │   ├── revisoes.ts   Filtros, paginação, atribuição e distribuição
+│   │   │   │   └── atendimentos.ts  Tentativas, situação da revisão, proteção contra sobrescrita
 │   │   │   ├── lib/              Utilitários sem regra de negócio
 │   │   │   │   ├── erros.ts      ErroHttp: erro com código HTTP
 │   │   │   │   ├── validar.ts    Valida com zod e lança 400 com os campos errados
 │   │   │   │   ├── csv.ts        Gera CSV para Excel (BOM, ";", anti-fórmula)
-│   │   │   │   └── formatar.ts   Datas, celular e situação em texto
+│   │   │   │   ├── formatar.ts   Datas, celular e situação em texto
+│   │   │   │   └── datas.ts      Datas "só dia" (agendada, próximo contato), sem erro de fuso
 │   │   │   ├── db/
 │   │   │   │   └── prisma.ts     Conexão única com o banco (PrismaClient)
 │   │   │   └── generated/prisma/ Cliente gerado pelo Prisma (NÃO vai pro Git)
@@ -112,10 +115,11 @@ gestao-pos-venda/
 │           │   ├── EmBreve.tsx   Aviso "em construção"
 │           │   ├── BadgeSituacao.tsx Etiqueta colorida da situação
 │           │   ├── Paginacao.tsx "1–20 de N" com anterior/próxima
-│           │   └── revisoes/     Peças da fila: filtros, tabela, painel Distribuir
+│           │   ├── revisoes/     Peças da fila: filtros, tabela, painel Distribuir
+│           │   └── atendimentos/ Formulário "Registrar contato" e histórico
 │           ├── hooks/
 │           │   └── useDebounce.ts Espera parar de digitar antes de buscar
-│           ├── pages/            Uma página por arquivo (Dashboard, Importações…)
+│           ├── pages/            Uma página por arquivo (Dashboard, Revisoes, RevisaoDetalhe…)
 │           ├── lib/
 │           │   ├── api.ts        Funções para chamar a API + tipos das respostas
 │           │   └── formatar.ts   Datas, celular, km, plural e cores das situações
@@ -177,10 +181,13 @@ app.ts
 ```
 
 ### Banco de dados (Etapa 4)
-- **8 tabelas** definidas em [`prisma/schema.prisma`](../apps/api/prisma/schema.prisma): `unidades`, `usuarios`, `motivos`, `importacoes`, `clientes`, `veiculos`, `ordens_servico`, `revisoes_alvo`. O desenho completo está no [README, seção 3](../README.md#3-modelo-de-dados-rascunho).
+- **9 tabelas** definidas em [`prisma/schema.prisma`](../apps/api/prisma/schema.prisma): `unidades`, `usuarios`, `motivos`, `importacoes`, `clientes`, `veiculos`, `ordens_servico`, `revisoes_alvo` e `tentativas_contato` (Etapa 8). O desenho completo está no [README, seção 3](../README.md#3-modelo-de-dados-rascunho).
 - **Chaves de negócio únicas:** `veiculos.chassi` (cruzamento com as OS) e `revisoes_alvo (veiculo_id, km)`, que impede a mesma revisão duas vezes na fila e acaba com as linhas repetidas da planilha.
 - **Índices** nas colunas mais filtradas: `ordens_servico.chassi`, `revisoes_alvo.situacao`, `operador_id` e `unidade_id`.
-- **Concorrência:** `revisoes_alvo.versao` prepara o *optimistic locking* da Etapa 8.
+- **Concorrência (*optimistic locking*, Etapa 8):** toda gravação na revisão é um `updateMany` com `WHERE id = ? AND versao = ?` que também soma 1 à versão. Se outra pessoa gravou antes, a versão já mudou, nenhuma linha é alterada e a API responde **409** sem gravar nada. Não há bloqueio de registro: ninguém fica "preso" esperando.
+- **Histórico só cresce:** `tentativas_contato` só recebe inserções. A situação da revisão é sempre calculada a partir da última tentativa (`efeitoDaTentativa`), inclusive ao reabrir uma revisão concluída.
+- **Datas só dia:** `data_agendada` e `proximo_contato` são `DATE` (sem hora). O Prisma devolve meia-noite UTC, então elas são formatadas **sem fuso** (`diaBR`, em `lib/datas.ts` e `apps/web/src/lib/formatar.ts`). Datas com hora (venda, registro do contato) usam o fuso `America/Fortaleza`.
+- **Migração com conversão de dados:** a `20261112120053_atendimentos` foi gerada por `prisma migrate diff` e ajustada à mão para converter `motivos.encerra_cliente` em `motivos.acao` antes de apagar a coluna antiga.
 - **Migrações versionadas:** cada mudança no schema vira uma pasta em `prisma/migrations/` com o SQL. Elas vão para o Git, para que qualquer máquina chegue ao mesmo banco.
 - **Usuário próprio:** a API conecta como `pos_venda` (dono só do banco do sistema), nunca como o administrador `postgres`.
 - **Seed idempotente:** usa `upsert`, então pode rodar várias vezes. Só tem dados fictícios.
@@ -295,6 +302,7 @@ O Bootstrap usa `!default` nas variáveis, então as que definimos **antes** del
 | ~~4~~ | ✅ PostgreSQL + Prisma: concluída (ver seção 3) |
 | 6 | Upload (`multer`), leitura de planilhas (`exceljs`, `csv-parse`), testes (`vitest`). O `zod` já entrou na Etapa 7 |
 | ~~7~~ | ✅ Fila de revisões: `schemas/`, `lib/`, rotas de catálogo, atribuir, distribuir e exportar |
+| ~~8~~ | ✅ Atendimentos: `tentativas_contato`, tela do cliente, proteção contra sobrescrita (409) |
 | 9 | Login (JWT ou sessão), middleware de permissões, tabela de auditoria |
 | 11 | Hospedagem da API e do frontend, backup do banco |
 

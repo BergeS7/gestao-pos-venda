@@ -6,7 +6,7 @@
  * A API tem as mesmas regras em apps/api/src/lib/formatar.ts (usadas no CSV).
  */
 
-import type { SituacaoRevisao } from './api.ts'
+import type { ResultadoContato, SituacaoRevisao } from './api.ts'
 
 /** Nome e cor (classe de badge do Bootstrap) de cada situação da fila. */
 export const SITUACOES: Record<SituacaoRevisao, { rotulo: string; badge: string }> = {
@@ -25,6 +25,46 @@ export const KMS_REVISAO = [1000, 6000, 12000, 18000] as const
 export function dataBR(iso: string | null | undefined): string {
   if (!iso) return '—'
   return new Date(iso).toLocaleDateString('pt-BR', { timeZone: 'America/Fortaleza' })
+}
+
+/**
+ * Datas SÓ DIA (data agendada, próximo contato) chegam como meia-noite UTC.
+ * Não podem passar pelo fuso do Maranhão (UTC-3), senão mostrariam o dia
+ * anterior. Por isso usam timeZone UTC. Mesma regra da API (lib/datas.ts).
+ */
+export function diaBR(iso: string | null | undefined): string {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString('pt-BR', { timeZone: 'UTC' })
+}
+
+/** Data e hora no fuso do Maranhão: "12/11/2026 14:05". */
+export function dataHoraBR(iso: string): string {
+  return new Date(iso).toLocaleString('pt-BR', {
+    timeZone: 'America/Fortaleza',
+    dateStyle: 'short',
+    timeStyle: 'short',
+  })
+}
+
+/** Hoje no fuso do Maranhão, mais `dias`, como "AAAA-MM-DD" (formato do <input type="date">). */
+export function diaISO(dias = 0): string {
+  const hoje = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Fortaleza' }).format(new Date())
+  const d = new Date(`${hoje}T00:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + dias)
+  return d.toISOString().slice(0, 10)
+}
+
+/** Texto da resposta "Agendou?" como na planilha. */
+export const ROTULO_RESULTADO: Record<ResultadoContato, string> = {
+  SIM: 'Agendou',
+  NAO: 'Não agendou',
+  RETORNAR: 'Retornar',
+}
+
+/** Celular só com dígitos e com DDI 55, para links de WhatsApp. undefined se não houver. */
+export function celularWhatsApp(celular: string | null | undefined): string | undefined {
+  const d = (celular ?? '').replace(/\D/g, '')
+  return d.length >= 10 ? `55${d}` : undefined
 }
 
 /** "98900000001" → "(98) 90000-0001". Devolve o original se não reconhecer o formato. */

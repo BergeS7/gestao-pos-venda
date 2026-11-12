@@ -163,3 +163,60 @@ export type ResultadoDistribuir = {
   distribuidas: number
   porOperadora: { operadorId: number; quantidade: number }[]
 }
+
+// ---------------------------------------------------------------------------
+// Atendimentos (Etapa 8)
+// ---------------------------------------------------------------------------
+
+/** Resposta "Agendou?" (enum ResultadoContato do schema.prisma). */
+export type ResultadoContato = 'SIM' | 'NAO' | 'RETORNAR'
+
+/** Para onde a revisão vai com este motivo (enum AcaoMotivo do schema.prisma). */
+export type AcaoMotivo = 'RETORNAR' | 'BUSCAR_CONTATO' | 'ENCERRAR'
+
+/** GET /api/motivos */
+export type Motivo = { id: number; descricao: string; acao: AcaoMotivo }
+
+/** Uma ligação do histórico. Datas "só dia" chegam como "AAAA-MM-DDT00:00:00.000Z". */
+export type Tentativa = {
+  id: number
+  /** Data e hora do registro (ISO, UTC). */
+  criadoEm: string
+  conseguiuFalar: boolean
+  resultado: ResultadoContato
+  dataAgendada: string | null
+  proximoContato: string | null
+  observacoes: string | null
+  motivo: { id: number; descricao: string } | null
+  usuario: { id: number; nome: string } | null
+}
+
+/** GET /api/revisoes/:id — a revisão com o histórico (mais nova primeiro). */
+export type RevisaoDetalhe = Revisao & { tentativas: Tentativa[] }
+
+/** Corpo de POST /api/revisoes/:id/tentativas. Datas no formato "AAAA-MM-DD". */
+export type NovaTentativa = {
+  versao: number
+  conseguiuFalar: boolean
+  resultado: ResultadoContato
+  motivoId?: number | null
+  dataAgendada?: string
+  proximoContato?: string
+  observacoes?: string
+}
+
+/** Código que a API manda em `detalhes.codigo` quando outra pessoa alterou a revisão antes. */
+export const CODIGO_VERSAO_DESATUALIZADA = 'VERSAO_DESATUALIZADA'
+
+/** Mensagens por campo que a API devolve num erro 400 (`detalhes.campos`). */
+export function errosDosCampos(erro: unknown): Record<string, string[]> {
+  if (!(erro instanceof ErroApi) || erro.status !== 400) return {}
+  const detalhes = erro.detalhes as { campos?: Record<string, string[]> } | undefined
+  return detalhes?.campos ?? {}
+}
+
+/** Código do erro (`detalhes.codigo`), se a API mandou um. */
+export function codigoDoErro(erro: unknown): string | undefined {
+  if (!(erro instanceof ErroApi)) return undefined
+  return (erro.detalhes as { codigo?: string } | undefined)?.codigo
+}

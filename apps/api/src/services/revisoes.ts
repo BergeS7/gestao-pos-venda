@@ -31,7 +31,7 @@ import type {
  * `select` explícito: só o necessário. CPF/CNPJ NUNCA sai na listagem.
  * `satisfies` faz o TypeScript conferir o formato sem perder o tipo exato.
  */
-const camposRevisao = {
+export const camposRevisao = {
   id: true,
   km: true,
   situacao: true,

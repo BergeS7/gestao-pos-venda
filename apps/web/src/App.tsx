@@ -15,6 +15,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout.tsx'
 import Dashboard from './pages/Dashboard.tsx'
 import Revisoes from './pages/Revisoes.tsx'
+import RevisaoDetalhe from './pages/RevisaoDetalhe.tsx'
 import Atendimentos from './pages/Atendimentos.tsx'
 import Importacoes from './pages/Importacoes.tsx'
 import Usuarios from './pages/Usuarios.tsx'
@@ -29,6 +30,8 @@ export default function App() {
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="revisoes" element={<Revisoes />} />
+        {/* Tela do cliente: registrar contato e histórico (Etapa 8) */}
+        <Route path="revisoes/:id" element={<RevisaoDetalhe />} />
         <Route path="atendimentos" element={<Atendimentos />} />
         <Route path="importacoes" element={<Importacoes />} />
         <Route path="usuarios" element={<Usuarios />} />

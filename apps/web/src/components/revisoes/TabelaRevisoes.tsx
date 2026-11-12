@@ -4,10 +4,12 @@
  * Mostra uma página de revisões, com caixas de seleção para as ações em lote
  * (atribuir operadora). A seleção fica na página Revisoes.tsx; a tabela só
  * mostra o que está marcado e avisa quando o usuário marca ou desmarca.
+ * O nome do cliente leva para a tela do cliente (/revisoes/:id, Etapa 8).
  */
 
+import { Link } from 'react-router-dom'
 import type { Revisao } from '../../lib/api.ts'
-import { celularBR, dataBR, kmBR } from '../../lib/formatar.ts'
+import { celularBR, diaBR, kmBR } from '../../lib/formatar.ts'
 import BadgeSituacao from '../BadgeSituacao.tsx'
 
 type Props = {
@@ -70,7 +72,9 @@ export default function TabelaRevisoes({ itens, selecionados, onAlternar, onAlte
                 />
               </td>
               <td>
-                <div className="fw-semibold">{r.veiculo.cliente.nome}</div>
+                <Link to={`/revisoes/${r.id}`} className="fw-semibold link-dark">
+                  {r.veiculo.cliente.nome}
+                </Link>
                 <div className="small text-secondary">{celularBR(r.veiculo.cliente.celular)}</div>
               </td>
               <td>
@@ -86,7 +90,7 @@ export default function TabelaRevisoes({ itens, selecionados, onAlternar, onAlte
                 <BadgeSituacao situacao={r.situacao} />
               </td>
               <td>{r.operador ? r.operador.nome : <span className="text-secondary fst-italic">Sem operadora</span>}</td>
-              <td className="text-nowrap">{dataBR(r.proximoContato)}</td>
+              <td className="text-nowrap">{diaBR(r.proximoContato)}</td>
             </tr>
           ))}
         </tbody>

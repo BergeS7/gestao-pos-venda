@@ -40,12 +40,12 @@ catalogosRouter.get("/operadoras", async (_req, res) => {
   );
 });
 
-/** GET /api/motivos → [{ id, descricao, encerraCliente }] */
+/** GET /api/motivos → [{ id, descricao, acao }]. `acao` diz se a revisão volta para a fila, vai para "buscar contato" ou encerra. */
 catalogosRouter.get("/motivos", async (_req, res) => {
   res.json(
     await prisma.motivo.findMany({
       where: { ativo: true },
-      select: { id: true, descricao: true, encerraCliente: true },
+      select: { id: true, descricao: true, acao: true },
       orderBy: { id: "asc" },
     }),
   );

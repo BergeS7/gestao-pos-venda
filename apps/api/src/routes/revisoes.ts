@@ -12,14 +12,21 @@
  * | GET    | /exportar    | Baixa a fila filtrada em CSV (abre no Excel)       |
  * | PATCH  | /atribuir    | Atribui revisões selecionadas a uma operadora      |
  * | POST   | /distribuir  | Divide as revisões sem operadora entre operadoras  |
+ * | GET    | /:id         | Tela do cliente: revisão + histórico de contatos   |
+ * | POST   | /:id/tentativas | Registra uma ligação (Etapa 8)                  |
+ * | PATCH  | /:id/concluir   | Marca como feita na oficina, ou reabre          |
  *
  * Erros de validação respondem 400; os demais caem no tratador do app.ts.
+ * As rotas com :id ficam por último para que "/exportar" não seja lido como id.
  */
 
 import { Router } from "express";
 import { validar } from "../lib/validar.js";
 import { gerarCsv, type ColunaCsv } from "../lib/csv.js";
 import { celularBR, dataBR, ROTULO_SITUACAO } from "../lib/formatar.js";
+import { diaBR } from "../lib/datas.js";
+import { concluirSchema, idRevisaoSchema, registrarTentativaSchema } from "../schemas/atendimentos.js";
+import { concluirRevisao, detalharRevisao, registrarTentativa } from "../services/atendimentos.js";
 import {
   atribuirSchema,
   distribuirSchema,
@@ -66,8 +73,9 @@ const colunasExportacao: ColunaCsv<LinhaExportacao>[] = [
   { titulo: "Revisão (km)", valor: (r) => r.km },
   { titulo: "Situação", valor: (r) => ROTULO_SITUACAO[r.situacao] },
   { titulo: "Operadora", valor: (r) => r.operador?.nome ?? "Sem operadora" },
-  { titulo: "Próximo contato", valor: (r) => dataBR(r.proximoContato) },
-  { titulo: "Data agendada", valor: (r) => dataBR(r.dataAgendada) },
+  // Datas só dia: diaBR (sem conversão de fuso; ver lib/datas.ts)
+  { titulo: "Próximo contato", valor: (r) => diaBR(r.proximoContato) },
+  { titulo: "Data agendada", valor: (r) => diaBR(r.dataAgendada) },
 ];
 
 /**
@@ -110,4 +118,44 @@ revisoesRouter.patch("/atribuir", async (req, res) => {
 revisoesRouter.post("/distribuir", async (req, res) => {
   const params = validar(distribuirSchema, req.body);
   res.json(await distribuirRevisoes(params));
+});
+
+// ---------------------------------------------------------------------------
+// Tela do cliente (Etapa 8)
+// ---------------------------------------------------------------------------
+
+/**
+ * GET /api/revisoes/:id
+ * Resposta 200: a revisão (mesmos campos da fila) + `tentativas` (mais nova primeiro).
+ * Resposta 404 se não existir.
+ */
+revisoesRouter.get("/:id", async (req, res) => {
+  const id = validar(idRevisaoSchema, req.params.id);
+  res.json(await detalharRevisao(id));
+});
+
+/**
+ * POST /api/revisoes/:id/tentativas
+ *
+ * Corpo: { versao, conseguiuFalar, resultado: "SIM"|"NAO"|"RETORNAR",
+ *          motivoId?, dataAgendada?: "AAAA-MM-DD", proximoContato?: "AAAA-MM-DD", observacoes? }
+ * Resposta 201: a revisão atualizada, com o histórico.
+ * Resposta 409 se outra pessoa alterou a revisão antes (versão diferente) ou se ela já está concluída.
+ */
+revisoesRouter.post("/:id/tentativas", async (req, res) => {
+  const id = validar(idRevisaoSchema, req.params.id);
+  const params = validar(registrarTentativaSchema, req.body);
+  res.status(201).json(await registrarTentativa(id, params));
+});
+
+/**
+ * PATCH /api/revisoes/:id/concluir
+ *
+ * Corpo: { versao, concluida: true | false }
+ * Resposta 200: a revisão atualizada. 409 se a versão estiver desatualizada.
+ */
+revisoesRouter.patch("/:id/concluir", async (req, res) => {
+  const id = validar(idRevisaoSchema, req.params.id);
+  const params = validar(concluirSchema, req.body);
+  res.json(await concluirRevisao(id, params));
 });
