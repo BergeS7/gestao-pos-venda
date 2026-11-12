@@ -154,7 +154,7 @@ gestao-pos-venda/
 │   ├── marca/logo-original.webp  Logo original (fundo transparente), fonte das versões em apps/web/public/marca/
 │   └── apresentacao-proposta.pptx
 ├── scripts/
-│   └── gerar-marca.py            Gera logo clara, logo branca e ícones a partir da logo original
+│   └── gerar-marca.py            Gera a logo das telas e os ícones a partir da logo original
 ├── Documentos/                   Planilhas REAIS (ignorada pelo Git, tem CPF/telefone)
 ├── .vscode/                      Configuração do VS Code: terminal cmd, tarefas e extensões
 ├── package.json                  Scripts da raiz: "npm run dev" sobe API + web juntos (concurrently)

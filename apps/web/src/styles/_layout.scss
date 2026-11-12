@@ -41,10 +41,13 @@
 }
 
 .sidebar-brand {
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid rgba($mm-branco, 0.1);
+  // Faixa branca para a logo aparecer com as cores originais (texto preto),
+  // com a linha vermelha da marca separando dos links do menu
+  padding: 1rem 1.25rem;
+  background: $mm-branco;
+  border-bottom: 4px solid $primary;
 
-  // Logo (public/marca/logo-negativo.webp), sozinha e centralizada.
+  // Logo (public/marca/logo.webp), sozinha e centralizada.
   // width/height no <img> reservam o espaço antes de carregar; aqui a altura
   // acompanha a largura para não distorcer.
   .brand-logo {

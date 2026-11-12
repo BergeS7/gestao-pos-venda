@@ -5,10 +5,9 @@ A logo original (fundo transparente, 2000x667) fica em
 docs/marca/logo-original.webp. Este script recorta e redimensiona essa imagem
 e grava em apps/web/public/marca/:
 
-  logo.webp           logo completa, texto preto  → telas claras (login)
-  logo-negativo.webp  logo completa, texto branco → menu lateral escuro
-  icone.png (256px)   só o fone com o "M"         → ícone da aba do navegador
-  icone-180.png       mesmo ícone, 180px          → atalho na tela do celular
+  logo.webp           logo completa → login e topo branco do menu lateral
+  icone.png (256px)   só o fone com o "M" → ícone da aba do navegador
+  icone-180.png       mesmo ícone, 180px → atalho na tela do celular
 
 Como rodar (precisa do Pillow: pip install pillow), a partir da raiz do repo:
   python scripts/gerar-marca.py
@@ -39,23 +38,6 @@ def recortar(img: Image.Image, margem: int = 8) -> Image.Image:
     return img.crop((max(x0 - margem, 0), max(y0 - margem, 0), x1 + margem, y1 + margem))
 
 
-def negativo(img: Image.Image) -> Image.Image:
-    """
-    Troca o preto (texto e fone) por branco, mantendo a transparência.
-    Só mexe em pixels "cinza" (sem cor) e escuros: o vermelho do círculo e o
-    "M" branco ficam como estão.
-    """
-    saida = img.copy()
-    px = saida.load()
-    for y in range(saida.height):
-        for x in range(saida.width):
-            r, g, b, a = px[x, y]
-            sem_cor = max(r, g, b) - min(r, g, b) < 30
-            if a and sem_cor and max(r, g, b) < 200:
-                px[x, y] = (255, 255, 255, a)
-    return saida
-
-
 def quadrado(img: Image.Image, lado: int) -> Image.Image:
     """Centraliza a imagem num quadrado transparente de `lado` pixels."""
     img = img.copy()
@@ -69,12 +51,11 @@ def main() -> None:
     DESTINO.mkdir(parents=True, exist_ok=True)
     original = Image.open(ORIGINAL).convert("RGBA")
 
-    # Logo completa, em versão clara e escura
+    # Logo completa
     logo = recortar(original)
     altura = round(logo.height * LARGURA_LOGO / logo.width)
     logo = logo.resize((LARGURA_LOGO, altura), Image.LANCZOS)
     logo.save(DESTINO / "logo.webp", quality=90)
-    negativo(logo).save(DESTINO / "logo-negativo.webp", quality=90)
 
     # Ícone: só a parte do desenho, sem o texto
     icone = recortar(original.crop((0, 0, FIM_DO_ICONE, original.height)), margem=4)
