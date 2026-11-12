@@ -353,4 +353,4 @@ As planilhas em `Documentos/` têm **nome, CPF e celular de clientes reais**. A 
 - [docs/arquitetura.md](docs/arquitetura.md): como o sistema está organizado (pastas, camadas, padrões)
 - [docs/regras-de-negocio.md](docs/regras-de-negocio.md): lógica extraída das planilhas
 - [docs/apresentacao-proposta.pptx](docs/apresentacao-proposta.pptx): proposta apresentada à diretoria
-- Identidade visual: <https://www.maranhaomotos.com.br/>
+- Identidade visual: <https://www.maranhaomotos.com.br/>. Logo do sistema em [docs/marca/](docs/marca/); para refazer as versões usadas nas telas (clara, branca e ícone da aba), rode `python scripts/gerar-marca.py` (precisa do Pillow)

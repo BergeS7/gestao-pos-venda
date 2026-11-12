@@ -44,24 +44,20 @@
   padding: 1.5rem 1.25rem 1.25rem;
   border-bottom: 1px solid rgba($mm-branco, 0.1);
 
-  .brand-name {
-    font-weight: 800;
-    font-size: 1.35rem;
-    line-height: 1.05;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-  }
-
-  .brand-bar {
-    width: 64px;
-    height: 4px;
-    background: $primary;
-    border-radius: 2px;
-    margin: 0.5rem 0;
+  // Logo (public/marca/logo-negativo.webp): ocupa a largura do menu.
+  // width/height no <img> reservam o espaço antes de carregar; aqui a altura
+  // acompanha a largura para não distorcer.
+  .brand-logo {
+    display: block;
+    width: 100%;
+    height: auto;
   }
 
   .brand-sub {
-    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
     color: $mm-cinza-claro;
   }
 }
@@ -280,29 +276,25 @@
   overflow: hidden;
 }
 
-// Faixa com a marca, no mesmo estilo do topo do menu lateral
+// Topo do cartão com a logo colorida (public/marca/logo.webp), centralizada,
+// separada do formulário por uma linha vermelha da marca
 .tela-login-marca {
-  background: $sidebar-bg;
-  color: $mm-branco;
-  padding: 1.5rem;
+  padding: 1.75rem 1.5rem 1.25rem;
+  text-align: center;
+  border-bottom: 4px solid $primary;
 
-  .brand-name {
-    font-weight: 800;
-    font-size: 1.35rem;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-  }
-
-  .brand-bar {
-    width: 64px;
-    height: 4px;
-    background: $primary;
-    border-radius: 2px;
-    margin: 0.5rem 0;
+  .brand-logo {
+    width: 100%;
+    max-width: 280px;
+    height: auto;
   }
 
   .brand-sub {
-    font-size: 0.85rem;
-    color: $mm-cinza-claro;
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: $secondary;
   }
 }

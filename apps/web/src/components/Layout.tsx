@@ -2,7 +2,7 @@
  * Layout.tsx — Estrutura comum a todas as páginas
  *
  * Desenha:
- *  - o menu lateral (marca + links das páginas);
+ *  - o menu lateral (logo + links das páginas);
  *  - a barra superior (com o botão ☰ que abre o menu no celular, o nome de
  *    quem está logado, "Trocar senha" e "Sair");
  *  - a área de conteúdo, onde o React Router coloca a página atual (<Outlet />).
@@ -33,13 +33,15 @@ export default function Layout() {
       {/* ---------- Menu lateral ---------- */}
       <aside className={`sidebar ${menuAberto ? 'is-open' : ''}`} aria-label="Menu principal">
         <div className="sidebar-brand">
-          <div className="brand-name">
-            Maranhão
-            <br />
-            Motos
-          </div>
-          <div className="brand-bar" />
-          <div className="brand-sub">Pós-Venda Oficina</div>
+          {/* Versão branca da logo, para o fundo escuro do menu (public/marca/) */}
+          <img
+            className="brand-logo"
+            src="/marca/logo-negativo.webp"
+            alt="Gestão Pós-Venda"
+            width={360}
+            height={127}
+          />
+          <div className="brand-sub">Maranhão Motos</div>
         </div>
 
         <nav className="sidebar-nav nav flex-column">
