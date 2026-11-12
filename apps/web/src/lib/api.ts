@@ -3,11 +3,16 @@
  *
  * Toda chamada HTTP à API passa por aqui, em vez de usar `fetch` espalhado
  * pelas páginas. Vantagens:
- *  - um só lugar para tratar erros, autenticação (Etapa 9) etc.;
+ *  - um só lugar para tratar erros e a sessão de login (Etapa 9);
  *  - os tipos das respostas ficam declarados junto das chamadas.
  *
  * Os caminhos são relativos (/api/...). Em desenvolvimento, o proxy do Vite
  * (vite.config.ts) repassa essas chamadas para a API na porta 3333.
+ *
+ * LOGIN (Etapa 9): a sessão fica num cookie httpOnly que o próprio navegador
+ * envia em toda chamada (o JavaScript não lê nem guarda o token). Quando a API
+ * responde 401 (sessão vencida ou encerrada), avisamos o resto do app pelo
+ * evento EVENTO_SESSAO_EXPIRADA, e ele volta para a tela de login.
  *
  * Os tipos abaixo espelham o que a API devolve (apps/api/src/services e routes).
  * Ao mudar uma resposta na API, atualize o tipo correspondente aqui.
@@ -37,9 +42,17 @@ export class ErroApi extends Error {
   }
 }
 
-/** Transforma uma resposta HTTP em JSON tipado, ou lança ErroApi. */
+/** Evento disparado em `window` quando a API diz que a sessão acabou (401). */
+export const EVENTO_SESSAO_EXPIRADA = 'sessao-expirada'
+
+/** Transforma uma resposta HTTP em JSON tipado, ou lança ErroApi. Respostas sem corpo (204) viram undefined. */
 async function tratarResposta<T>(res: Response, path: string): Promise<T> {
+  if (res.status === 204) return undefined as T
   if (res.ok) return res.json() as Promise<T>
+  // 401 fora do login = a sessão acabou. O login errado também é 401, mas é tratado na própria tela.
+  if (res.status === 401 && !path.startsWith('/auth/login')) {
+    window.dispatchEvent(new Event(EVENTO_SESSAO_EXPIRADA))
+  }
   // Tenta ler a mensagem da API; se não vier JSON (API fora do ar), usa uma genérica
   const corpo = (await res.json().catch(() => null)) as { error?: string; detalhes?: unknown } | null
   throw new ErroApi(res.status, corpo?.error ?? `Erro ${res.status} ao chamar /api${path}`, corpo?.detalhes)
@@ -60,7 +73,8 @@ async function tratarResposta<T>(res: Response, path: string): Promise<T> {
  *   const saude = await apiGet<Health>('/health')
  */
 export async function apiGet<T>(path: string, signal?: AbortSignal): Promise<T> {
-  const res = await fetch(`/api${path}`, { signal })
+  // same-origin: envia o cookie de sessão (o proxy do Vite deixa API e tela no mesmo endereço)
+  const res = await fetch(`/api${path}`, { signal, credentials: 'same-origin' })
   return tratarResposta<T>(res, path)
 }
 
@@ -77,6 +91,7 @@ export async function apiEnviar<T>(
 ): Promise<T> {
   const res = await fetch(`/api${path}`, {
     method: metodo,
+    credentials: 'same-origin',
     headers: { 'Content-Type': 'application/json' },
     body: corpo === undefined ? undefined : JSON.stringify(corpo),
   })
@@ -109,6 +124,65 @@ export type Health = {
   /** Hora do servidor, ISO 8601 (UTC). */
   timestamp: string
 }
+
+// ---------------------------------------------------------------------------
+// Login e usuários (Etapa 9)
+// ---------------------------------------------------------------------------
+
+/** Perfis de acesso (enum Perfil do schema.prisma). */
+export type Perfil = 'OPERADORA' | 'GESTOR' | 'DIRETORIA' | 'ADMIN'
+
+/** Quem está logado: POST /api/auth/login e GET /api/auth/eu. */
+export type UsuarioLogado = {
+  id: number
+  nome: string
+  email: string
+  perfil: Perfil
+  unidadeId: number | null
+  /** true = senha provisória; precisa trocar antes de usar o sistema. */
+  trocarSenha: boolean
+}
+
+/** Um usuário na tela de Usuários (GET /api/usuarios, só Admin). */
+export type UsuarioAdmin = {
+  id: number
+  nome: string
+  email: string
+  perfil: Perfil
+  ativo: boolean
+  trocarSenha: boolean
+  temSenha: boolean
+  ultimoAcesso: string | null
+  criadoEm: string
+  unidade: { id: number; sigla: string } | null
+}
+
+/** Um registro da auditoria (GET /api/auditoria). */
+export type EventoAuditoria = {
+  id: number
+  acao: string
+  entidade: string
+  entidadeId: number | null
+  detalhes: Record<string, unknown> | null
+  criadoEm: string
+  usuario: { id: number; nome: string } | null
+}
+
+/** Resposta paginada de GET /api/auditoria. */
+export type ListaAuditoria = {
+  itens: EventoAuditoria[]
+  total: number
+  pagina: number
+  porPagina: number
+  totalPaginas: number
+}
+
+/** Código em `detalhes.codigo` quando a pessoa precisa trocar a senha antes de continuar. */
+export const CODIGO_TROCAR_SENHA = 'TROCAR_SENHA'
+
+// ---------------------------------------------------------------------------
+// Fila de revisões
+// ---------------------------------------------------------------------------
 
 /** Situações da fila (enum SituacaoRevisao do schema.prisma). */
 export type SituacaoRevisao =

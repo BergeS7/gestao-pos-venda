@@ -7,7 +7,8 @@
 //   media-breakpoint-up(lg)   → telas a partir de 992px (desktop)
 //   media-breakpoint-down(lg) → telas menores que 992px (tablet/celular)
 // Componentes que usam estas classes: components/Layout.tsx, PageHeader.tsx,
-// pages/Dashboard.tsx, pages/Revisoes.tsx e pages/RevisaoDetalhe.tsx.
+// pages/Dashboard.tsx, pages/Revisoes.tsx, pages/RevisaoDetalhe.tsx,
+// pages/Login.tsx e pages/TrocarSenha.tsx.
 // =============================================================================
 
 // ---------- Estrutura geral ----------
@@ -259,5 +260,49 @@
   .kpi-icon {
     font-size: 1.5rem;
     color: $primary;
+  }
+}
+
+// ---------- Login e "Crie sua senha" (pages/Login.tsx, pages/TrocarSenha.tsx, Etapa 9) ----------
+// Tela cheia, sem menu, com o formulário centralizado
+.tela-login {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+  background: $body-bg;
+}
+
+.tela-login-card {
+  width: 100%;
+  max-width: 400px;
+  overflow: hidden;
+}
+
+// Faixa com a marca, no mesmo estilo do topo do menu lateral
+.tela-login-marca {
+  background: $sidebar-bg;
+  color: $mm-branco;
+  padding: 1.5rem;
+
+  .brand-name {
+    font-weight: 800;
+    font-size: 1.35rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .brand-bar {
+    width: 64px;
+    height: 4px;
+    background: $primary;
+    border-radius: 2px;
+    margin: 0.5rem 0;
+  }
+
+  .brand-sub {
+    font-size: 0.85rem;
+    color: $mm-cinza-claro;
   }
 }

@@ -5,7 +5,8 @@
  * Responsabilidades:
  *  1. Carregar os estilos globais (ícones e o tema Sass com o Bootstrap);
  *  2. Ativar o roteamento por URL (BrowserRouter);
- *  3. Renderizar o componente <App /> dentro da <div id="root">.
+ *  3. Guardar a sessão de login para o app todo (AuthProvider, Etapa 9);
+ *  4. Renderizar o componente <App /> dentro da <div id="root">.
  */
 
 import { StrictMode } from 'react'
@@ -17,6 +18,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css'
 // Tema da Maranhão Motos + Bootstrap + layout (ver src/styles/)
 import './styles/main.scss'
 
+import AuthProvider from './auth/AuthProvider.tsx'
 import App from './App.tsx'
 
 createRoot(document.getElementById('root')!).render(
@@ -25,7 +27,10 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     {/* BrowserRouter: permite navegar entre páginas pela URL (/dashboard, /importacoes...) */}
     <BrowserRouter>
-      <App />
+      {/* AuthProvider: descobre quem está logado e oferece useAuth() às páginas */}
+      <AuthProvider>
+        <App />
+      </AuthProvider>
     </BrowserRouter>
   </StrictMode>,
 )

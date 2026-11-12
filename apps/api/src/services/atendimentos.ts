@@ -6,6 +6,8 @@
  *    nem reescrito; a planilha criava linhas repetidas);
  *  - a SITUAÇÃO da revisão é sempre consequência da última tentativa
  *    (ver `efeitoDaTentativa`);
+ *  - a OPERADORA só acessa revisões da própria carteira (as outras respondem
+ *    404, como se não existissem); toda gravação vai para a auditoria (Etapa 9);
  *  - PROTEÇÃO CONTRA SOBRESCRITA (optimistic locking): toda gravação informa a
  *    `versao` que a tela mostrava. Se outra pessoa gravou antes, a versão do
  *    banco já mudou, nada é gravado e a resposta é 409.
@@ -19,11 +21,14 @@
 import { prisma } from "../db/prisma.js";
 import {
   AcaoMotivo,
+  Perfil,
   Prisma,
   ResultadoContato,
   SituacaoRevisao,
 } from "../generated/prisma/client.js";
 import { ErroHttp } from "../lib/erros.js";
+import type { UsuarioLogado } from "../middleware/auth.js";
+import { ACOES, auditar } from "./auditoria.js";
 import type { ConcluirParams, RegistrarTentativaParams } from "../schemas/atendimentos.js";
 import { camposRevisao } from "./revisoes.js";
 
@@ -89,14 +94,32 @@ const camposTentativa = {
 } satisfies Prisma.TentativaContatoSelect;
 
 /**
+ * Condição de acesso: a operadora só alcança revisões atribuídas a ela.
+ * Os demais perfis alcançam todas.
+ */
+function filtroDeAcesso(id: number, usuario: UsuarioLogado): Prisma.RevisaoAlvoWhereInput {
+  return usuario.perfil === Perfil.OPERADORA ? { id, operadorId: usuario.id } : { id };
+}
+
+/**
+ * Confere, antes de gravar, se o usuário pode mexer nesta revisão.
+ * Se ela for reatribuída logo depois, a versão muda e a gravação dá 409.
+ * @throws ErroHttp 404 se não existir ou for da carteira de outra operadora
+ */
+async function garantirAcesso(id: number, usuario: UsuarioLogado) {
+  const existe = await prisma.revisaoAlvo.findFirst({ where: filtroDeAcesso(id, usuario), select: { id: true } });
+  if (!existe) throw new ErroHttp(404, "Revisão não encontrada");
+}
+
+/**
  * Dados da tela do cliente: a revisão (mesmos campos da fila, sem CPF) e o
  * histórico de tentativas, da mais nova para a mais antiga.
  *
- * @throws ErroHttp 404 se a revisão não existir.
+ * @throws ErroHttp 404 se a revisão não existir ou o usuário não tiver acesso a ela.
  */
-export async function detalharRevisao(id: number) {
-  const revisao = await prisma.revisaoAlvo.findUnique({
-    where: { id },
+export async function detalharRevisao(id: number, usuario: UsuarioLogado) {
+  const revisao = await prisma.revisaoAlvo.findFirst({
+    where: filtroDeAcesso(id, usuario),
     select: {
       ...camposRevisao,
       tentativas: { select: camposTentativa, orderBy: [{ criadoEm: "desc" }, { id: "desc" }] },
@@ -137,7 +160,9 @@ async function erroDeGravacao(tx: Prisma.TransactionClient, id: number, exigirAb
  * @throws ErroHttp 404 revisão não encontrada
  * @throws ErroHttp 409 revisão concluída, ou alterada por outra pessoa (versão diferente)
  */
-export async function registrarTentativa(revisaoId: number, p: RegistrarTentativaParams) {
+export async function registrarTentativa(usuario: UsuarioLogado, revisaoId: number, p: RegistrarTentativaParams) {
+  await garantirAcesso(revisaoId, usuario);
+
   // 1. O motivo decide para onde a revisão vai
   let acaoMotivo: AcaoMotivo | null = null;
   if (p.motivoId) {
@@ -164,13 +189,11 @@ export async function registrarTentativa(revisaoId: number, p: RegistrarTentativ
     });
     if (count === 0) throw await erroDeGravacao(tx, revisaoId, true);
 
-    // Autor: até o login (Etapa 9), a operadora responsável pela revisão
-    const { operadorId } = await tx.revisaoAlvo.findUniqueOrThrow({ where: { id: revisaoId }, select: { operadorId: true } });
-
-    await tx.tentativaContato.create({
+    // Autor: quem está logado (a operadora, ou um gestor cobrindo a carteira)
+    const tentativa = await tx.tentativaContato.create({
       data: {
         revisaoId,
-        usuarioId: operadorId,
+        usuarioId: usuario.id,
         conseguiuFalar: p.conseguiuFalar,
         resultado: p.resultado,
         motivoId: p.motivoId ?? null,
@@ -178,10 +201,22 @@ export async function registrarTentativa(revisaoId: number, p: RegistrarTentativ
         proximoContato: efeito.proximoContato,
         observacoes: p.observacoes ?? null,
       },
+      select: { id: true },
     });
+
+    await auditar(
+      {
+        usuarioId: usuario.id,
+        acao: ACOES.TENTATIVA_REGISTRADA,
+        entidade: "revisoes_alvo",
+        entidadeId: revisaoId,
+        detalhes: { tentativaId: tentativa.id, resultado: p.resultado, situacao: efeito.situacao },
+      },
+      tx,
+    );
   });
 
-  return detalharRevisao(revisaoId);
+  return detalharRevisao(revisaoId, usuario);
 }
 
 /**
@@ -192,7 +227,9 @@ export async function registrarTentativa(revisaoId: number, p: RegistrarTentativ
  * @throws ErroHttp 404 revisão não encontrada
  * @throws ErroHttp 409 alterada por outra pessoa (versão diferente)
  */
-export async function concluirRevisao(revisaoId: number, { versao, concluida }: ConcluirParams) {
+export async function concluirRevisao(usuario: UsuarioLogado, revisaoId: number, { versao, concluida }: ConcluirParams) {
+  await garantirAcesso(revisaoId, usuario);
+
   await prisma.$transaction(async (tx) => {
     let dados: Prisma.RevisaoAlvoUpdateManyMutationInput;
     if (concluida) {
@@ -214,7 +251,18 @@ export async function concluirRevisao(revisaoId: number, { versao, concluida }: 
       data: { ...dados, concluida, versao: { increment: 1 } },
     });
     if (count === 0) throw await erroDeGravacao(tx, revisaoId, false);
+
+    await auditar(
+      {
+        usuarioId: usuario.id,
+        acao: concluida ? ACOES.REVISAO_CONCLUIDA : ACOES.REVISAO_REABERTA,
+        entidade: "revisoes_alvo",
+        entidadeId: revisaoId,
+        detalhes: { situacao: dados.situacao ?? null },
+      },
+      tx,
+    );
   });
 
-  return detalharRevisao(revisaoId);
+  return detalharRevisao(revisaoId, usuario);
 }

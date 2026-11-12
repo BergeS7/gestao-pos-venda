@@ -35,7 +35,27 @@ export const config = {
    * Localmente é criada por scripts/setup-db-local.ps1.
    */
   databaseUrl: obrigatoria("DATABASE_URL"),
+
+  /**
+   * Chave secreta que assina os tokens de login (JWT), Etapa 9. Obrigatória.
+   * Precisa ser longa e aleatória (32+ caracteres) e NUNCA ir para o Git:
+   * quem conhece esta chave consegue se passar por qualquer usuário.
+   * Trocar a chave desconecta todo mundo (os tokens antigos deixam de valer).
+   */
+  jwtSecret: chaveSecreta("JWT_SECRET"),
+
+  /** Tempo de validade do login, em horas. Padrão: 10 (um turno de trabalho com folga). */
+  sessaoHoras: Number(process.env.SESSAO_HORAS ?? 10),
 };
+
+/** Lê uma chave secreta obrigatória e recusa chaves curtas demais (fáceis de adivinhar). */
+function chaveSecreta(nome: string): string {
+  const valor = obrigatoria(nome);
+  if (valor.length < 32) {
+    throw new Error(`${nome} precisa ter pelo menos 32 caracteres. Gere uma com: node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`);
+  }
+  return valor;
+}
 
 /**
  * Lê uma variável de ambiente obrigatória. Se ela faltar, encerra com uma

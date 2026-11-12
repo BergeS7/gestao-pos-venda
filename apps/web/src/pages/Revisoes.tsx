@@ -11,12 +11,17 @@
  *  - "Distribuir": divide as revisões sem operadora entre várias operadoras;
  *  - "Exportar": baixa o CSV da fila filtrada (abre no Excel).
  *
+ * Por perfil (Etapa 9): a OPERADORA vê só a própria carteira (a API garante;
+ * aqui o filtro de operadora some) e não vê seleção nem "Distribuir", que são
+ * de Gestor e Admin. A Diretoria só consulta e exporta.
+ *
  * Os componentes visuais ficam em components/revisoes/. Esta página cuida do
  * estado e das chamadas à API.
  */
 
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useAuth } from '../auth/contexto.ts'
 import PageHeader from '../components/PageHeader.tsx'
 import Paginacao from '../components/Paginacao.tsx'
 import FiltrosRevisoes from '../components/revisoes/FiltrosRevisoes.tsx'
@@ -25,6 +30,7 @@ import TabelaRevisoes from '../components/revisoes/TabelaRevisoes.tsx'
 import { CAMPOS_FILTRO, type FiltrosFila } from '../components/revisoes/tipos.ts'
 import { useDebounce } from '../hooks/useDebounce.ts'
 import { plural } from '../lib/formatar.ts'
+import { pode } from '../lib/permissoes.ts'
 import {
   apiEnviar,
   apiGet,
@@ -46,6 +52,12 @@ type Resultado = { chave: string; dados?: ListaRevisoes; erro?: string }
 type Aviso = { tipo: 'success' | 'danger'; texto: string }
 
 export default function Revisoes() {
+  const { usuario } = useAuth()
+  /** Gestor e Admin organizam a fila: seleção, "Atribuir a" e "Distribuir". */
+  const gerir = pode(usuario, 'gerirFila')
+  /** Operadora vê só a carteira dela: o filtro de operadora não se aplica. */
+  const verTodas = pode(usuario, 'verTodasCarteiras')
+
   // -------------------------------------------------------------------------
   // Filtros (na URL)
   // -------------------------------------------------------------------------
@@ -97,7 +109,7 @@ export default function Revisoes() {
   const [operadoras, setOperadoras] = useState<Operadora[]>([])
 
   useEffect(() => {
-    Promise.all([apiGet<Unidade[]>('/unidades'), apiGet<Operadora[]>('/operadoras')])
+    Promise.all([apiGet<Unidade[]>('/unidades'), verTodas ? apiGet<Operadora[]>('/operadoras') : Promise.resolve([])])
       .then(([u, o]) => {
         setUnidades(u)
         setOperadoras(o)
@@ -105,7 +117,7 @@ export default function Revisoes() {
       .catch(() => {
         /* a lista principal já mostra o erro de conexão */
       })
-  }, [])
+  }, [verTodas])
 
   // -------------------------------------------------------------------------
   // Lista de revisões
@@ -211,16 +223,21 @@ export default function Revisoes() {
   return (
     <>
       <div className="d-flex flex-wrap justify-content-between align-items-start gap-2">
-        <PageHeader title="Fila de revisões" subtitle="Clientes a contatar por revisão (1.000, 6.000, 12.000 e 18.000 km)" />
+        <PageHeader
+          title={verTodas ? 'Fila de revisões' : 'Minha carteira'}
+          subtitle="Clientes a contatar por revisão (1.000, 6.000, 12.000 e 18.000 km)"
+        />
         <div className="d-flex gap-2">
-          <button
-            type="button"
-            className="btn btn-outline-primary"
-            onClick={() => setMostrarDistribuir((v) => !v)}
-            disabled={operadoras.length === 0}
-          >
-            <i className="bi bi-diagram-3 me-1" aria-hidden="true" /> Distribuir
-          </button>
+          {gerir && (
+            <button
+              type="button"
+              className="btn btn-outline-primary"
+              onClick={() => setMostrarDistribuir((v) => !v)}
+              disabled={operadoras.length === 0}
+            >
+              <i className="bi bi-diagram-3 me-1" aria-hidden="true" /> Distribuir
+            </button>
+          )}
           {/* Link direto: o navegador baixa o arquivo gerado pela API */}
           <a className="btn btn-primary" href={`/api/revisoes/exportar${queryFiltros}`} download>
             <i className="bi bi-download me-1" aria-hidden="true" /> Exportar
@@ -235,7 +252,7 @@ export default function Revisoes() {
         </div>
       )}
 
-      {mostrarDistribuir && (
+      {gerir && mostrarDistribuir && (
         <PainelDistribuir
           operadoras={operadoras}
           enviando={enviando}
@@ -252,10 +269,11 @@ export default function Revisoes() {
         onBusca={setBusca}
         onMudar={mudarFiltro}
         onLimpar={limparFiltros}
+        mostrarOperadora={verTodas}
       />
 
       {/* Barra de ações em lote: aparece quando há revisões marcadas */}
-      {selecionados.size > 0 && (
+      {gerir && selecionados.size > 0 && (
         <div className="barra-selecao card border-0 shadow-sm mb-3">
           <div className="card-body d-flex flex-wrap align-items-center gap-2 py-2">
             <strong>{plural(selecionados.size, 'selecionada', 'selecionadas')}</strong>
@@ -307,8 +325,8 @@ export default function Revisoes() {
               <TabelaRevisoes
                 itens={lista.itens}
                 selecionados={selecionados}
-                onAlternar={alternar}
-                onAlternarTodos={alternarTodos}
+                onAlternar={gerir ? alternar : undefined}
+                onAlternarTodos={gerir ? alternarTodos : undefined}
               />
               <div className="mt-3">
                 <Paginacao

@@ -7,6 +7,9 @@
  *
  * Exceção: o campo de busca recebe o texto digitado (`busca`) separado dos
  * filtros, porque a página espera o usuário parar de digitar antes de buscar.
+ *
+ * `mostrarOperadora = false` esconde o filtro de operadora (a operadora só
+ * vê a própria carteira, Etapa 9).
  */
 
 import type { Operadora, SituacaoRevisao, Unidade } from '../../lib/api.ts'
@@ -22,9 +25,20 @@ type Props = {
   onBusca: (texto: string) => void
   onMudar: (campo: keyof FiltrosFila, valor: string) => void
   onLimpar: () => void
+  /** Mostra o filtro de operadora (padrão: sim). */
+  mostrarOperadora?: boolean
 }
 
-export default function FiltrosRevisoes({ filtros, busca, unidades, operadoras, onBusca, onMudar, onLimpar }: Props) {
+export default function FiltrosRevisoes({
+  filtros,
+  busca,
+  unidades,
+  operadoras,
+  onBusca,
+  onMudar,
+  onLimpar,
+  mostrarOperadora = true,
+}: Props) {
   const temFiltro = busca !== '' || Object.values(filtros).some((v) => v !== '')
 
   return (
@@ -70,25 +84,27 @@ export default function FiltrosRevisoes({ filtros, busca, unidades, operadoras, 
             </select>
           </div>
 
-          <div className="col-6 col-md-4 col-xl">
-            <label htmlFor="f-operador" className="form-label small mb-1">
-              Operadora
-            </label>
-            <select
-              id="f-operador"
-              className="form-select"
-              value={filtros.operador}
-              onChange={(e) => onMudar('operador', e.target.value)}
-            >
-              <option value="">Todas</option>
-              <option value="sem">Sem operadora</option>
-              {operadoras.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.nome}
-                </option>
-              ))}
-            </select>
-          </div>
+          {mostrarOperadora && (
+            <div className="col-6 col-md-4 col-xl">
+              <label htmlFor="f-operador" className="form-label small mb-1">
+                Operadora
+              </label>
+              <select
+                id="f-operador"
+                className="form-select"
+                value={filtros.operador}
+                onChange={(e) => onMudar('operador', e.target.value)}
+              >
+                <option value="">Todas</option>
+                <option value="sem">Sem operadora</option>
+                {operadoras.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.nome}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="col-6 col-md-4 col-xl">
             <label htmlFor="f-km" className="form-label small mb-1">

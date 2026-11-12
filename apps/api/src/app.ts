@@ -9,19 +9,24 @@
  *
  * Ordem importa no Express: as requisições passam pelos `app.use(...)`
  * de cima para baixo.
- *   1. Middlewares globais (CORS, leitura de JSON)
- *   2. Rotas da API
+ *   1. Middlewares globais (CORS, leitura de JSON e de cookies)
+ *   2. Rotas da API: /health e /auth são abertas; o resto exige login (Etapa 9)
  *   3. 404 (nenhuma rota respondeu)
  *   4. Tratador de erros (sempre por último)
  */
 
 import express, { type NextFunction, type Request, type Response } from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import { config } from "./config.js";
 import { ErroHttp } from "./lib/erros.js";
 import { healthRouter } from "./routes/health.js";
 import { revisoesRouter } from "./routes/revisoes.js";
 import { catalogosRouter } from "./routes/catalogos.js";
+import { authRouter } from "./routes/auth.js";
+import { auditoriaRouter, usuariosRouter } from "./routes/usuarios.js";
+import { exigirLogin, exigirPerfil } from "./middleware/auth.js";
+import { Perfil } from "./generated/prisma/client.js";
 
 /** Instância da aplicação Express, exportada para o server.ts e para os testes. */
 export const app = express();
@@ -31,20 +36,37 @@ export const app = express();
 // ---------------------------------------------------------------------------
 
 // CORS: permite que o frontend (outro endereço/porta) chame esta API.
-// Só a origem configurada em CORS_ORIGIN é aceita.
-app.use(cors({ origin: config.corsOrigin }));
+// Só a origem configurada em CORS_ORIGIN é aceita. `credentials` deixa o
+// navegador mandar o cookie de sessão (em desenvolvimento o proxy do Vite já
+// deixa tudo no mesmo endereço, então o CORS quase não entra em ação).
+app.use(cors({ origin: config.corsOrigin, credentials: true }));
+
+// Lê os cookies (o de sessão, Etapa 9) para req.cookies.
+app.use(cookieParser());
 
 // Converte o corpo das requisições JSON em objeto (disponível em req.body).
-app.use(express.json());
+// Limite de 100 kB: nenhuma tela manda mais que isso.
+app.use(express.json({ limit: "100kb" }));
+
+// Atrás de um proxy (produção), confia no primeiro para ler o IP real de quem
+// acessa, usado no limite de tentativas de login.
+if (config.nodeEnv === "production") app.set("trust proxy", 1);
 
 // ---------------------------------------------------------------------------
 // 2. Rotas
 // Cada grupo de rotas fica num arquivo em src/routes/ e é "montado"
 // sob um prefixo. Todas as rotas da API começam com /api.
+//
+// PERMISSÕES (Etapa 9): `exigirLogin` barra quem não está logado (401) e
+// `exigirPerfil` barra perfis sem permissão (403). As regras finas, como
+// "operadora só vê a própria carteira", ficam nas rotas e serviços.
 // ---------------------------------------------------------------------------
-app.use("/api/health", healthRouter);
-app.use("/api/revisoes", revisoesRouter);
-app.use("/api", catalogosRouter); // /api/unidades, /api/operadoras, /api/motivos
+app.use("/api/health", healthRouter); // aberta: usada para saber se a API está no ar
+app.use("/api/auth", authRouter); // aberta: login, logout, quem sou eu, trocar senha
+app.use("/api/revisoes", exigirLogin, revisoesRouter);
+app.use("/api/usuarios", exigirLogin, exigirPerfil(Perfil.ADMIN), usuariosRouter);
+app.use("/api/auditoria", exigirLogin, exigirPerfil(Perfil.ADMIN), auditoriaRouter);
+app.use("/api", exigirLogin, catalogosRouter); // /api/unidades, /api/operadoras, /api/motivos
 // (Express 5 já encaminha erros de rotas async para o tratador de erros abaixo)
 
 // ---------------------------------------------------------------------------

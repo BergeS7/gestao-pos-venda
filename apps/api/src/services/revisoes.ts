@@ -14,6 +14,8 @@
 
 import { prisma } from "../db/prisma.js";
 import { Prisma, SituacaoRevisao } from "../generated/prisma/client.js";
+import type { UsuarioLogado } from "../middleware/auth.js";
+import { ACOES, auditar } from "./auditoria.js";
 import { ErroHttp } from "../lib/erros.js";
 import type {
   AtribuirParams,
@@ -178,14 +180,20 @@ async function garantirOperadorasAtivas(ids: number[]) {
  *
  * @returns quantas revisões foram atualizadas
  */
-export async function atribuirOperadora({ ids, operadorId }: AtribuirParams) {
+export async function atribuirOperadora(autor: UsuarioLogado, { ids, operadorId }: AtribuirParams) {
   if (operadorId !== null) await garantirOperadorasAtivas([operadorId]);
 
-  const { count } = await prisma.revisaoAlvo.updateMany({
-    where: { id: { in: ids } },
-    data: { operadorId, versao: { increment: 1 } },
+  return prisma.$transaction(async (tx) => {
+    const { count } = await tx.revisaoAlvo.updateMany({
+      where: { id: { in: ids } },
+      data: { operadorId, versao: { increment: 1 } },
+    });
+    await auditar(
+      { usuarioId: autor.id, acao: ACOES.REVISOES_ATRIBUIDAS, entidade: "revisoes_alvo", detalhes: { ids, operadorId, atualizadas: count } },
+      tx,
+    );
+    return { atualizadas: count };
   });
-  return { atualizadas: count };
 }
 
 /**
@@ -198,7 +206,7 @@ export async function atribuirOperadora({ ids, operadorId }: AtribuirParams) {
  *
  * @returns o total distribuído e quantas revisões cada operadora recebeu
  */
-export async function distribuirRevisoes({ operadorIds, filtros }: DistribuirParams) {
+export async function distribuirRevisoes(autor: UsuarioLogado, { operadorIds, filtros }: DistribuirParams) {
   await garantirOperadorasAtivas(operadorIds);
 
   const where: Prisma.RevisaoAlvoWhereInput = {
@@ -233,6 +241,15 @@ export async function distribuirRevisoes({ operadorIds, filtros }: DistribuirPar
     }
 
     const distribuidas = resumo.reduce((soma, r) => soma + r.quantidade, 0);
+    await auditar(
+      {
+        usuarioId: autor.id,
+        acao: ACOES.REVISOES_DISTRIBUIDAS,
+        entidade: "revisoes_alvo",
+        detalhes: { filtros, distribuidas, porOperadora: resumo } as Prisma.InputJsonValue,
+      },
+      tx,
+    );
     return { distribuidas, porOperadora: resumo };
   });
 }

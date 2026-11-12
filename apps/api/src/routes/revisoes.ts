@@ -6,21 +6,29 @@
  *
  * Montada em app.ts sob o prefixo /api/revisoes.
  *
- * | Método | Caminho      | O que faz                                          |
- * |--------|--------------|----------------------------------------------------|
- * | GET    | /            | Lista a fila (filtros + paginação)                 |
- * | GET    | /exportar    | Baixa a fila filtrada em CSV (abre no Excel)       |
- * | PATCH  | /atribuir    | Atribui revisões selecionadas a uma operadora      |
- * | POST   | /distribuir  | Divide as revisões sem operadora entre operadoras  |
- * | GET    | /:id         | Tela do cliente: revisão + histórico de contatos   |
- * | POST   | /:id/tentativas | Registra uma ligação (Etapa 8)                  |
- * | PATCH  | /:id/concluir   | Marca como feita na oficina, ou reabre          |
+ * Todas exigem login (app.ts). Permissões por perfil (Etapa 9):
+ *
+ * | Método | Caminho         | O que faz                                         | Quem pode                 |
+ * |--------|-----------------|---------------------------------------------------|---------------------------|
+ * | GET    | /               | Lista a fila (filtros + paginação)                | todos*                    |
+ * | GET    | /exportar       | Baixa a fila filtrada em CSV (abre no Excel)      | todos*                    |
+ * | PATCH  | /atribuir       | Atribui revisões selecionadas a uma operadora     | Gestor, Admin             |
+ * | POST   | /distribuir     | Divide as revisões sem operadora entre operadoras | Gestor, Admin             |
+ * | GET    | /:id            | Tela do cliente: revisão + histórico              | todos*                    |
+ * | POST   | /:id/tentativas | Registra uma ligação (Etapa 8)                    | Operadora*, Gestor, Admin |
+ * | PATCH  | /:id/concluir   | Marca como feita na oficina, ou reabre            | Operadora*, Gestor, Admin |
+ *
+ * (*) A OPERADORA só enxerga e altera a PRÓPRIA carteira: o filtro de
+ *     operadora é forçado para ela, e revisões de outra pessoa respondem 404.
+ *     A DIRETORIA só consulta.
  *
  * Erros de validação respondem 400; os demais caem no tratador do app.ts.
  * As rotas com :id ficam por último para que "/exportar" não seja lido como id.
  */
 
-import { Router } from "express";
+import { Router, type Request } from "express";
+import { Perfil } from "../generated/prisma/client.js";
+import { exigirPerfil, PERFIS_ATENDIMENTO, PERFIS_GESTAO, usuarioLogado } from "../middleware/auth.js";
 import { validar } from "../lib/validar.js";
 import { gerarCsv, type ColunaCsv } from "../lib/csv.js";
 import { celularBR, dataBR, ROTULO_SITUACAO } from "../lib/formatar.js";
@@ -43,6 +51,15 @@ import {
 export const revisoesRouter = Router();
 
 /**
+ * Operadora só vê a própria carteira: troca o filtro "operador" pelo id dela,
+ * qualquer que seja o valor pedido. Os outros perfis veem o filtro que pediram.
+ */
+function filtrarCarteira<F extends { operador?: number | "sem" }>(req: Request, filtros: F): F {
+  const usuario = usuarioLogado(req);
+  return usuario.perfil === Perfil.OPERADORA ? { ...filtros, operador: usuario.id } : filtros;
+}
+
+/**
  * GET /api/revisoes
  *
  * Query (todos opcionais):
@@ -53,7 +70,7 @@ export const revisoesRouter = Router();
  * Resposta 200: { itens: [...], total, pagina, porPagina, totalPaginas }
  */
 revisoesRouter.get("/", async (req, res) => {
-  const params = validar(listarRevisoesSchema, req.query);
+  const params = filtrarCarteira(req, validar(listarRevisoesSchema, req.query));
   res.json(await listarRevisoes(params));
 });
 
@@ -86,7 +103,7 @@ const colunasExportacao: ColunaCsv<LinhaExportacao>[] = [
  * Resposta 413 se passar do limite de linhas (ver MAX_EXPORTACAO).
  */
 revisoesRouter.get("/exportar", async (req, res) => {
-  const filtros = validar(filtrosRevisoesSchema, req.query);
+  const filtros = filtrarCarteira(req, validar(filtrosRevisoesSchema, req.query));
   const linhas = await listarParaExportar(filtros);
 
   const hoje = new Date().toISOString().slice(0, 10);
@@ -103,9 +120,9 @@ revisoesRouter.get("/exportar", async (req, res) => {
  * Resposta 200: { "atualizadas": 3 }
  * Resposta 404 se a operadora não existir ou estiver inativa.
  */
-revisoesRouter.patch("/atribuir", async (req, res) => {
+revisoesRouter.patch("/atribuir", exigirPerfil(...PERFIS_GESTAO), async (req, res) => {
   const params = validar(atribuirSchema, req.body);
-  res.json(await atribuirOperadora(params));
+  res.json(await atribuirOperadora(usuarioLogado(req), params));
 });
 
 /**
@@ -115,9 +132,9 @@ revisoesRouter.patch("/atribuir", async (req, res) => {
  * Divide em partes iguais as revisões SEM operadora (e não concluídas) do filtro.
  * Resposta 200: { "distribuidas": 7, "porOperadora": [{ "operadorId": 2, "quantidade": 3 }, ...] }
  */
-revisoesRouter.post("/distribuir", async (req, res) => {
+revisoesRouter.post("/distribuir", exigirPerfil(...PERFIS_GESTAO), async (req, res) => {
   const params = validar(distribuirSchema, req.body);
-  res.json(await distribuirRevisoes(params));
+  res.json(await distribuirRevisoes(usuarioLogado(req), params));
 });
 
 // ---------------------------------------------------------------------------
@@ -131,7 +148,7 @@ revisoesRouter.post("/distribuir", async (req, res) => {
  */
 revisoesRouter.get("/:id", async (req, res) => {
   const id = validar(idRevisaoSchema, req.params.id);
-  res.json(await detalharRevisao(id));
+  res.json(await detalharRevisao(id, usuarioLogado(req)));
 });
 
 /**
@@ -142,10 +159,10 @@ revisoesRouter.get("/:id", async (req, res) => {
  * Resposta 201: a revisão atualizada, com o histórico.
  * Resposta 409 se outra pessoa alterou a revisão antes (versão diferente) ou se ela já está concluída.
  */
-revisoesRouter.post("/:id/tentativas", async (req, res) => {
+revisoesRouter.post("/:id/tentativas", exigirPerfil(...PERFIS_ATENDIMENTO), async (req, res) => {
   const id = validar(idRevisaoSchema, req.params.id);
   const params = validar(registrarTentativaSchema, req.body);
-  res.status(201).json(await registrarTentativa(id, params));
+  res.status(201).json(await registrarTentativa(usuarioLogado(req), id, params));
 });
 
 /**
@@ -154,8 +171,8 @@ revisoesRouter.post("/:id/tentativas", async (req, res) => {
  * Corpo: { versao, concluida: true | false }
  * Resposta 200: a revisão atualizada. 409 se a versão estiver desatualizada.
  */
-revisoesRouter.patch("/:id/concluir", async (req, res) => {
+revisoesRouter.patch("/:id/concluir", exigirPerfil(...PERFIS_ATENDIMENTO), async (req, res) => {
   const id = validar(idRevisaoSchema, req.params.id);
   const params = validar(concluirSchema, req.body);
-  res.json(await concluirRevisao(id, params));
+  res.json(await concluirRevisao(usuarioLogado(req), id, params));
 });

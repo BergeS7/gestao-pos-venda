@@ -138,12 +138,17 @@ Frontend:
 ---
 
 ## Etapa 9 — Login e permissões
-- [ ] Senhas com `bcrypt` e login gerando token **JWT** (ou sessão em cookie `httpOnly`)
-- [ ] Middleware no Express que exige login e confere o perfil
-- [ ] Perfis: Colaborador, Gestor, Diretoria, Admin
-- [ ] Colaborador vê só a própria carteira
-- [ ] Tela de Usuários (só Admin)
-- [ ] Tabela `auditoria`: quem alterou o quê e quando
+- [x] Senhas com `bcrypt` e login gerando token **JWT**, guardado em cookie `httpOnly` + `SameSite=Strict`
+- [x] Middleware no Express que exige login (401) e confere o perfil (403)
+- [x] Perfis: Operadora (o "colaborador" da planilha), Gestor, Diretoria, Admin
+- [x] Operadora vê só a própria carteira (a API força o filtro; revisão de outra pessoa responde 404)
+- [x] Tela de Usuários (só Admin): criar com senha provisória, editar, redefinir senha, desativar (nunca apagar)
+- [x] Senha provisória obrigatoriamente trocada no primeiro login; trocar a senha encerra os outros logins
+- [x] Limite de tentativas: 5 erros seguidos bloqueiam o e-mail por 15 minutos
+- [x] Tabela `auditoria`: quem alterou o quê e quando (login, contatos, conclusão, atribuição, distribuição, usuários)
+- [x] O autor de cada contato passa a ser quem está logado
+
+> Testado com os quatro perfis na API (58 verificações) e no navegador: menus, botões e páginas mudam por perfil, sessão vencida volta para o login com aviso.
 
 > Se usar Supabase, avalie o **Supabase Auth** em vez de fazer o login do zero.
 

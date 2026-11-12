@@ -4,6 +4,8 @@
  * Mostra uma página de revisões, com caixas de seleção para as ações em lote
  * (atribuir operadora). A seleção fica na página Revisoes.tsx; a tabela só
  * mostra o que está marcado e avisa quando o usuário marca ou desmarca.
+ * Sem `onAlternar` (perfis que não organizam a fila, Etapa 9), as caixas de
+ * seleção não aparecem.
  * O nome do cliente leva para a tela do cliente (/revisoes/:id, Etapa 8).
  */
 
@@ -16,14 +18,15 @@ type Props = {
   itens: Revisao[]
   /** Ids marcados. */
   selecionados: Set<number>
-  /** Marca/desmarca uma revisão. */
-  onAlternar: (id: number) => void
+  /** Marca/desmarca uma revisão. Sem ela, a tabela não mostra as caixas de seleção. */
+  onAlternar?: (id: number) => void
   /** Marca todas da página (true) ou desmarca todas (false). */
-  onAlternarTodos: (marcar: boolean) => void
+  onAlternarTodos?: (marcar: boolean) => void
 }
 
 export default function TabelaRevisoes({ itens, selecionados, onAlternar, onAlternarTodos }: Props) {
   const todosMarcados = itens.length > 0 && itens.every((r) => selecionados.has(r.id))
+  const selecionavel = Boolean(onAlternar && onAlternarTodos)
 
   if (itens.length === 0) {
     return (
@@ -41,15 +44,17 @@ export default function TabelaRevisoes({ itens, selecionados, onAlternar, onAlte
       <table className="table table-hover align-middle mb-0 tabela-fila">
         <thead>
           <tr>
-            <th scope="col" className="col-check">
-              <input
-                type="checkbox"
-                className="form-check-input"
-                checked={todosMarcados}
-                onChange={(e) => onAlternarTodos(e.target.checked)}
-                aria-label="Selecionar todas desta página"
-              />
-            </th>
+            {selecionavel && (
+              <th scope="col" className="col-check">
+                <input
+                  type="checkbox"
+                  className="form-check-input"
+                  checked={todosMarcados}
+                  onChange={(e) => onAlternarTodos?.(e.target.checked)}
+                  aria-label="Selecionar todas desta página"
+                />
+              </th>
+            )}
             <th scope="col">Cliente</th>
             <th scope="col">Moto</th>
             <th scope="col">Revisão</th>
@@ -62,15 +67,17 @@ export default function TabelaRevisoes({ itens, selecionados, onAlternar, onAlte
         <tbody>
           {itens.map((r) => (
             <tr key={r.id} className={selecionados.has(r.id) ? 'table-active' : undefined}>
-              <td className="col-check">
-                <input
-                  type="checkbox"
-                  className="form-check-input"
-                  checked={selecionados.has(r.id)}
-                  onChange={() => onAlternar(r.id)}
-                  aria-label={`Selecionar ${r.veiculo.cliente.nome}`}
-                />
-              </td>
+              {selecionavel && (
+                <td className="col-check">
+                  <input
+                    type="checkbox"
+                    className="form-check-input"
+                    checked={selecionados.has(r.id)}
+                    onChange={() => onAlternar?.(r.id)}
+                    aria-label={`Selecionar ${r.veiculo.cliente.nome}`}
+                  />
+                </td>
+              )}
               <td>
                 <Link to={`/revisoes/${r.id}`} className="fw-semibold link-dark">
                   {r.veiculo.cliente.nome}

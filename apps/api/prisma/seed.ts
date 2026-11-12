@@ -8,7 +8,8 @@
  *      • as 3 unidades (STI, ZDC, BRT);
  *      • os 11 motivos de não agendamento usados na planilha.
  *  - Dados de exemplo FICTÍCIOS, para desenvolver e testar telas:
- *      • 1 gestor e 3 operadoras;
+ *      • 1 admin, 1 diretoria, 1 gestor e 3 operadoras, todos com a senha de
+ *        desenvolvimento SEED_SENHA (Etapa 9);
  *      • 20 clientes, cada um com 1 moto e 1 revisão na fila.
  *
  * ⚠️ Nunca coloque aqui dados reais de clientes (nome, CPF, telefone).
@@ -18,6 +19,7 @@
  */
 
 import { prisma } from "../src/db/prisma.js";
+import { gerarHash } from "../src/lib/senhas.js";
 import { AcaoMotivo, Perfil, SituacaoRevisao } from "../src/generated/prisma/client.js";
 
 // ---------------------------------------------------------------------------
@@ -57,8 +59,17 @@ const MOTIVOS = [
 // Dados de exemplo (fictícios)
 // ---------------------------------------------------------------------------
 
+/**
+ * Senha dos usuários fictícios, SÓ para desenvolvimento e testes.
+ * Pode ser trocada com SEED_SENHA no .env. Em produção o seed não define senhas:
+ * o primeiro Admin real recebe a senha pelo script de implantação.
+ */
+const SENHA_DEV = process.env.SEED_SENHA || "Exemplo2026";
+
 /** Usuários fictícios. O domínio .local deixa claro que não são e-mails reais. */
 const USUARIOS = [
+  { nome: "Admin Exemplo", email: "admin@exemplo.local", perfil: Perfil.ADMIN, unidade: null },
+  { nome: "Diretoria Exemplo", email: "diretoria@exemplo.local", perfil: Perfil.DIRETORIA, unidade: null },
   { nome: "Gestor Exemplo", email: "gestor@exemplo.local", perfil: Perfil.GESTOR, unidade: "STI" },
   { nome: "Operadora A", email: "operadora.a@exemplo.local", perfil: Perfil.OPERADORA, unidade: "STI" },
   { nome: "Operadora B", email: "operadora.b@exemplo.local", perfil: Perfil.OPERADORA, unidade: "ZDC" },
@@ -128,13 +139,20 @@ async function main() {
   }
 
   console.log("Seed: usuários fictícios...");
+  const emProducao = process.env.NODE_ENV === "production";
+  const senhaHash = emProducao ? null : await gerarHash(SENHA_DEV);
   const operadoras: number[] = [];
   for (const u of USUARIOS) {
+    const unidade = u.unidade ? unidadeId[u.unidade] : null;
     const usuario = await prisma.usuario.upsert({
       where: { email: u.email },
-      update: { nome: u.nome, perfil: u.perfil, unidadeId: unidadeId[u.unidade] },
-      create: { nome: u.nome, email: u.email, perfil: u.perfil, unidadeId: unidadeId[u.unidade] },
+      update: { nome: u.nome, perfil: u.perfil, unidadeId: unidade },
+      create: { nome: u.nome, email: u.email, perfil: u.perfil, unidadeId: unidade, senhaHash },
     });
+    // Quem ainda não tem senha recebe a de desenvolvimento. Quem já trocou mantém a dele.
+    if (!usuario.senhaHash && senhaHash) {
+      await prisma.usuario.update({ where: { id: usuario.id }, data: { senhaHash } });
+    }
     if (u.perfil === Perfil.OPERADORA) operadoras.push(usuario.id);
   }
 

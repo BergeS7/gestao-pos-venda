@@ -89,13 +89,28 @@ Reproduz o relatório de produção atual, mas calculado automaticamente:
 
 Toda alteração registra autor e data/hora. Há proteção contra sobrescrita entre usuários.
 
+**Como funciona o acesso (Etapa 9):**
+
+| | Operadora | Gestor | Diretoria | Admin |
+|---|---|---|---|---|
+| Ver a fila | só a própria carteira | todas | todas | todas |
+| Registrar contato e concluir | sim | sim | — | sim |
+| Atribuir e distribuir | — | sim | — | sim |
+| Importações | — | sim | — | sim |
+| Usuários e auditoria | — | — | — | sim |
+
+- Login com **e-mail e senha**. O Admin cria o usuário com uma **senha provisória**, que a pessoa troca no primeiro acesso.
+- Senha com pelo menos 8 caracteres, letras e números. 5 erros seguidos bloqueiam o login por 15 minutos.
+- Usuário que sai da equipe é **desativado** (não apagado): perde o acesso na hora, e as revisões abertas da carteira dele voltam para "sem operadora".
+
 ---
 
 ## 3. Modelo de dados (rascunho)
 
 ```
 unidades          (id, sigla [STI|ZDC|BRT], nome)
-usuarios          (id, nome, email, senha_hash, perfil, unidade_id, ativo)
+usuarios          (id, nome, email UNIQUE, senha_hash, trocar_senha, perfil,
+                   unidade_id, ativo, ultimo_acesso)
 importacoes       (id, usuario_id, tipo [revisoes|os], arquivo, periodo_ref,
                    total_linhas, total_validos, total_invalidos, status, criado_em)
 clientes          (id, nome, cpf_cnpj, celular, municipio)
@@ -108,7 +123,7 @@ tentativas_contato(id, revisao_id, usuario_id, criado_em, conseguiu_falar,
                    resultado [sim|nao|retornar], motivo_id, data_agendada,
                    proximo_contato, observacoes)
 motivos           (id, descricao, acao [retornar|buscar_contato|encerrar], ativo)
-auditoria         (id, usuario_id, entidade, entidade_id, acao, antes, depois, criado_em)
+auditoria         (id, usuario_id, acao, entidade, entidade_id, detalhes JSON, criado_em)
 ```
 
 **Situação de `revisoes_alvo`:** `pendente` → `retornar` | `agendado` | `nao_agendado` | `buscar_contato` → `concluida`.
@@ -186,6 +201,14 @@ npm run db:seed
 
 O `npm install` na raiz já instala também as dependências de `apps/api` e `apps/web`.
 
+No `apps/api/.env`, troque o `JWT_SECRET` por uma chave aleatória (a API não sobe com chave curta):
+
+```bash
+node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+```
+
+**Usuários de teste** (fictícios, criados pelo seed): `admin@exemplo.local`, `gestor@exemplo.local`, `diretoria@exemplo.local` e `operadora.a@exemplo.local` (também `.b` e `.c`). A senha de desenvolvimento é a `SEED_SENHA` do `.env` ou, se ela estiver vazia, `Exemplo2026`. Em produção o seed não define senhas.
+
 **No dia a dia:**
 
 ```bash
@@ -244,7 +267,7 @@ cd apps/api
 npm run dev
 ```
 
-Teste em <http://localhost:3333/api/health> e <http://localhost:3333/api/revisoes>.
+Teste em <http://localhost:3333/api/health>. As outras rotas exigem login (a resposta sem login é 401).
 
 | Script | O que faz |
 |---|---|
@@ -260,10 +283,21 @@ Teste em <http://localhost:3333/api/health> e <http://localhost:3333/api/revisoe
 
 **Rotas da API**
 
+Todas as rotas, menos `/api/health` e `/api/auth/*`, exigem login. Sem login a resposta é **401**; com um perfil sem permissão, **403** (ver a tabela da seção 2.5).
+
 | Método e rota | Descrição |
 |---|---|
 | `GET /api/health` | Verifica se a API está no ar |
-| `GET /api/revisoes` | Fila de revisões com veículo, cliente, unidade e operadora. Aceita `busca`, `unidade`, `operador` (id ou `sem`), `km`, `situacao`, `mesVenda` (AAAA-MM), `pagina` e `porPagina` (máximo 100) |
+| `POST /api/auth/login` | Corpo `{ email, senha }`: entra e grava o cookie de sessão (`httpOnly`) |
+| `POST /api/auth/logout` | Sai (apaga o cookie) |
+| `GET /api/auth/eu` | Quem está logado |
+| `POST /api/auth/senha` | Corpo `{ senhaAtual, novaSenha }`: troca a própria senha |
+| `GET /api/usuarios` | Lista os usuários (só Admin, sem hash de senha) |
+| `POST /api/usuarios` | Corpo `{ nome, email, perfil, unidadeId, senhaProvisoria }`: cria usuário (só Admin) |
+| `PATCH /api/usuarios/:id` | Altera `nome`, `email`, `perfil`, `unidadeId` ou `ativo` (só Admin) |
+| `POST /api/usuarios/:id/senha` | Corpo `{ senhaProvisoria }`: redefine a senha (só Admin) |
+| `GET /api/auditoria` | Últimas alterações, paginado (só Admin) |
+| `GET /api/revisoes` | Fila de revisões com veículo, cliente, unidade e operadora (a operadora recebe só a carteira dela). Aceita `busca`, `unidade`, `operador` (id ou `sem`), `km`, `situacao`, `mesVenda` (AAAA-MM), `pagina` e `porPagina` (máximo 100) |
 | `GET /api/revisoes/exportar` | Baixa a fila filtrada em CSV (mesmos filtros, até 20.000 linhas, sem CPF) |
 | `PATCH /api/revisoes/atribuir` | Corpo `{ ids, operadorId }`: passa as revisões para uma operadora (`null` tira a operadora) |
 | `POST /api/revisoes/distribuir` | Corpo `{ operadorIds, filtros }`: divide em partes iguais as revisões sem operadora do filtro |
@@ -286,7 +320,7 @@ npm install
 npm run dev
 ```
 
-Abra <http://localhost:5173>. O Dashboard deve mostrar **API ok**. O Vite encaminha as chamadas `/api` para a porta 3333.
+Abra <http://localhost:5173> e entre com um dos usuários de teste. O Dashboard deve mostrar **API ok**. O Vite encaminha as chamadas `/api` para a porta 3333, então tela e API ficam no mesmo endereço e o cookie de sessão funciona sem configuração extra.
 
 | Script | O que faz |
 |---|---|

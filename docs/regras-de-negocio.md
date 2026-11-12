@@ -187,4 +187,8 @@ Também há um bloco "agendados no mês X, concluídos no mês X+1": a conclusã
 - [ ] "Sem cond financeira" e "Em abstenção" encerram o cliente ou viram retorno futuro? (Hoje estão como **encerrar** no seed; mudar é só trocar a `acao` do motivo.)
 - [ ] Na Etapa 8, o sistema só aceita "Agendou = sim" quando "Conseguiu falar = sim". Existe agendamento sem falar com o cliente (ex.: resposta por WhatsApp registrada depois)?
 - [ ] Depois de quantas tentativas sem sucesso o cliente sai da fila?
+- [ ] (Etapa 9) O **Gestor** vê todas as unidades ou só a dele? Hoje vê todas.
+- [ ] (Etapa 9) A **operadora** pode marcar a revisão como concluída, ou só o Gestor? Hoje ela pode, na própria carteira, e fica na auditoria.
+- [ ] (Etapa 9) Ao **desativar** uma operadora, as revisões abertas dela voltam para "sem operadora". Está certo, ou devem ir direto para outra pessoa?
+- [ ] (Etapa 9) Login de 10 horas e senha de 8+ caracteres com letras e números atendem à TI da empresa?
 - [ ] A lista de revisões é gerada uma vez por mês? Com qual filtro de data de venda?

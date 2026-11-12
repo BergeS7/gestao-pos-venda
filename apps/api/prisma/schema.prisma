@@ -93,16 +93,20 @@ model Unidade {
   @@map("unidades")
 }
 
-/// Pessoas que usam o sistema (operadoras, gestores...). Login entra na Etapa 9.
+/// Pessoas que usam o sistema (operadoras, gestores...). Entram com e-mail e senha (Etapa 9).
 model Usuario {
   id           Int      @id @default(autoincrement())
   nome         String   @db.VarChar(120)
   email        String   @unique @db.VarChar(160)
-  /// Hash da senha (bcrypt). Nulo até a Etapa 9.
+  /// Hash da senha (bcrypt, nunca a senha em texto). Nulo = ainda sem senha, não consegue entrar.
   senhaHash    String?  @map("senha_hash")
+  /// true quando a senha foi definida pelo Admin: no próximo login o sistema obriga a trocar.
+  trocarSenha  Boolean  @default(false) @map("trocar_senha")
   perfil       Perfil   @default(OPERADORA)
   unidadeId    Int?     @map("unidade_id")
+  /// Usuário desativado não entra, mas continua no histórico (nunca é apagado).
   ativo        Boolean  @default(true)
+  ultimoAcesso DateTime? @map("ultimo_acesso")
   criadoEm     DateTime @default(now()) @map("criado_em")
   atualizadoEm DateTime @updatedAt @map("atualizado_em")
 
@@ -112,6 +116,8 @@ model Usuario {
   revisoes    RevisaoAlvo[]
   /// Ligações registradas por este usuário
   tentativas  TentativaContato[]
+  /// Alterações feitas por este usuário (Etapa 9)
+  auditorias  Auditoria[]
 
   @@map("usuarios")
 }
@@ -269,7 +275,7 @@ model RevisaoAlvo {
 model TentativaContato {
   id             Int              @id @default(autoincrement())
   revisaoId      Int              @map("revisao_id")
-  /// Quem registrou. Até o login (Etapa 9), é a operadora responsável pela revisão.
+  /// Quem registrou: o usuário logado (Etapa 9). Contatos anteriores ao login ficaram com a operadora da revisão.
   usuarioId      Int?             @map("usuario_id")
   /// "Conseguiu falar?" da planilha
   conseguiuFalar Boolean          @map("conseguiu_falar")
@@ -290,4 +296,25 @@ model TentativaContato {
   /// Índice: a tela do cliente busca as tentativas de uma revisão, da mais nova para a mais antiga
   @@index([revisaoId, criadoEm])
   @@map("tentativas_contato")
+}
+
+/// Auditoria (Etapa 9): quem alterou o quê e quando. Só recebe inserções.
+/// `acao` é um código curto (ex.: "TENTATIVA_REGISTRADA", "USUARIO_CRIADO");
+/// `detalhes` guarda o que mudou, em JSON, SEM senhas nem dados sensíveis.
+model Auditoria {
+  id         Int      @id @default(autoincrement())
+  /// Quem fez. Nulo em eventos sem usuário identificado (ex.: login com e-mail inexistente).
+  usuarioId  Int?     @map("usuario_id")
+  acao       String   @db.VarChar(40)
+  /// Tabela afetada (ex.: "revisoes_alvo", "usuarios")
+  entidade   String   @db.VarChar(40)
+  entidadeId Int?     @map("entidade_id")
+  detalhes   Json?
+  criadoEm   DateTime @default(now()) @map("criado_em")
+
+  usuario Usuario? @relation(fields: [usuarioId], references: [id])
+
+  @@index([criadoEm])
+  @@index([entidade, entidadeId])
+  @@map("auditoria")
 }

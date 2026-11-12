@@ -11,10 +11,14 @@
  * está na tela. Se outra pessoa gravou antes (outra aba, outro computador),
  * a API responde 409 e NADA é gravado. A tela avisa e oferece "Recarregar".
  * O que já foi digitado no formulário é mantido, para não ser perdido.
+ *
+ * PERFIS (Etapa 9): a Diretoria só consulta (sem formulário nem "Concluir").
+ * A operadora só abre revisões da própria carteira; as outras dão 404.
  */
 
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useAuth } from '../auth/contexto.ts'
 import BadgeSituacao from '../components/BadgeSituacao.tsx'
 import FormContato from '../components/atendimentos/FormContato.tsx'
 import HistoricoContatos from '../components/atendimentos/HistoricoContatos.tsx'
@@ -29,6 +33,7 @@ import {
   type RevisaoDetalhe as Detalhe,
 } from '../lib/api.ts'
 import { celularBR, celularWhatsApp, dataBR, diaBR, kmBR } from '../lib/formatar.ts'
+import { pode } from '../lib/permissoes.ts'
 
 /** Resultado da última busca, marcado com a chave (id + recarga) que o gerou. */
 type Resultado = { chave: string; dados?: Detalhe; erro?: string; status?: number }
@@ -40,6 +45,8 @@ export default function RevisaoDetalhe() {
   const { id } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
+  /** Pode registrar contatos e concluir (Operadora, Gestor, Admin). */
+  const atender = pode(useAuth().usuario, 'atender')
 
   // -------------------------------------------------------------------------
   // Carregamento
@@ -256,7 +263,7 @@ export default function RevisaoDetalhe() {
                 <dt>Próximo contato</dt>
                 <dd>{diaBR(dados.proximoContato)}</dd>
               </dl>
-              {dados.concluida ? (
+              {!atender ? null : dados.concluida ? (
                 <button type="button" className="btn btn-outline-secondary" disabled={enviando} onClick={() => concluir(false)}>
                   <i className="bi bi-arrow-counterclockwise me-1" aria-hidden="true" /> Reabrir revisão
                 </button>
@@ -265,7 +272,7 @@ export default function RevisaoDetalhe() {
                   <i className="bi bi-check2-circle me-1" aria-hidden="true" /> Marcar como concluída
                 </button>
               )}
-              <div className="form-text">Concluída = a revisão foi feita na oficina.</div>
+              {atender && <div className="form-text">Concluída = a revisão foi feita na oficina.</div>}
             </div>
           </div>
         </div>
@@ -275,9 +282,9 @@ export default function RevisaoDetalhe() {
           {dados.concluida ? (
             <div className="alert alert-success mb-0">
               <i className="bi bi-check2-circle me-2" aria-hidden="true" />
-              Revisão concluída. Para registrar um novo contato, reabra a revisão.
+              Revisão concluída.{atender && ' Para registrar um novo contato, reabra a revisão.'}
             </div>
-          ) : (
+          ) : !atender ? null : (
             <FormContato
               key={salvos}
               motivos={motivos}
