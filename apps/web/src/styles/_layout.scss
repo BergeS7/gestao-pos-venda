@@ -57,7 +57,7 @@
   // o espaço antes de carregar).
   .brand-logo {
     display: block;
-    height: 36px;
+    height: 58px; // ocupa quase toda a faixa ($topbar-height), para o nome ficar legível
     width: auto;
   }
 }
