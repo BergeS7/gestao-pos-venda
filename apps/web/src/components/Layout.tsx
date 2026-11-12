@@ -33,7 +33,7 @@ export default function Layout() {
       {/* ---------- Menu lateral ---------- */}
       <aside className={`sidebar ${menuAberto ? 'is-open' : ''}`} aria-label="Menu principal">
         <div className="sidebar-brand">
-          {/* Logo original (texto preto) sobre a faixa branca do topo do menu */}
+          {/* Logo original sobre a faixa cinza-clara, alinhada com a barra superior */}
           <img
             className="brand-logo"
             src="/marca/logo.webp"

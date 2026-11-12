@@ -5,7 +5,7 @@ A logo original (fundo transparente, 2000x667) fica em
 docs/marca/logo-original.webp. Este script recorta e redimensiona essa imagem
 e grava em apps/web/public/marca/:
 
-  logo.webp           logo completa → login e topo branco do menu lateral
+  logo.webp           logo completa → login e topo do menu lateral
   icone.png (256px)   só o fone com o "M" → ícone da aba do navegador
   icone-180.png       mesmo ícone, 180px → atalho na tela do celular
 

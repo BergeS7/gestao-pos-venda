@@ -41,21 +41,24 @@
 }
 
 .sidebar-brand {
-  // Faixa branca para a logo aparecer com as cores originais (texto preto),
-  // com a linha vermelha da marca separando dos links do menu
-  padding: 1rem 1.25rem;
-  background: $mm-branco;
-  border-bottom: 4px solid $primary;
+  // Faixa cinza-clara com a logo nas cores originais. Tem a MESMA altura e a
+  // mesma linha vermelha da barra superior (.topbar), então as duas formam
+  // uma faixa contínua no topo da tela.
+  box-sizing: border-box;
+  height: $topbar-height;
+  display: flex;
+  align-items: center;
+  padding: 0 1.25rem;
+  background: $sidebar-brand-bg;
+  border-bottom: 3px solid $primary;
 
-  // Logo (public/marca/logo.webp), sozinha e centralizada.
-  // width/height no <img> reservam o espaço antes de carregar; aqui a altura
-  // acompanha a largura para não distorcer.
+  // Logo (public/marca/logo.webp), alinhada à esquerda como os itens do menu.
+  // A altura manda; a largura acompanha (width/height no <img> só reservam
+  // o espaço antes de carregar).
   .brand-logo {
     display: block;
-    width: 100%;
-    max-width: 200px;
-    height: auto;
-    margin: 0 auto;
+    height: 36px;
+    width: auto;
   }
 }
 
