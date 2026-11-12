@@ -41,24 +41,18 @@
 }
 
 .sidebar-brand {
-  padding: 1.5rem 1.25rem 1.25rem;
+  padding: 1.25rem 1.5rem;
   border-bottom: 1px solid rgba($mm-branco, 0.1);
 
-  // Logo (public/marca/logo-negativo.webp): ocupa a largura do menu.
+  // Logo (public/marca/logo-negativo.webp), sozinha e centralizada.
   // width/height no <img> reservam o espaço antes de carregar; aqui a altura
   // acompanha a largura para não distorcer.
   .brand-logo {
     display: block;
     width: 100%;
+    max-width: 200px;
     height: auto;
-  }
-
-  .brand-sub {
-    margin-top: 0.5rem;
-    font-size: 0.8rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: $mm-cinza-claro;
+    margin: 0 auto;
   }
 }
 

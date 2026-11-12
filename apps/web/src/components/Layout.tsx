@@ -41,7 +41,7 @@ export default function Layout() {
             width={360}
             height={127}
           />
-          <div className="brand-sub">Maranhão Motos</div>
+          {/* Sem subtítulo aqui: o nome "Maranhão Motos" já aparece na barra superior */}
         </div>
 
         <nav className="sidebar-nav nav flex-column">
