@@ -115,7 +115,8 @@ export async function alterarUsuario(autor: UsuarioLogado, id: number, p: Altera
       if (id === autor.id && p.perfil && p.perfil !== Perfil.ADMIN) {
         throw erroCampo("perfil", "Você não pode tirar o próprio perfil de Admin");
       }
-      const deixaDeSerAdmin = antes.perfil === Perfil.ADMIN && antes.ativo && (p.ativo === false || (p.perfil && p.perfil !== Perfil.ADMIN));
+      const deixaDeSerAdmin =
+        antes.perfil === Perfil.ADMIN && antes.ativo && (p.ativo === false || (p.perfil && p.perfil !== Perfil.ADMIN));
       if (deixaDeSerAdmin) {
         const outrosAdmins = await tx.usuario.count({ where: { perfil: Perfil.ADMIN, ativo: true, id: { not: id } } });
         if (outrosAdmins === 0) throw erroCampo("perfil", "O sistema precisa de pelo menos um Admin ativo");
@@ -124,7 +125,8 @@ export async function alterarUsuario(autor: UsuarioLogado, id: number, p: Altera
       // Operadora precisa de unidade
       const perfilFinal = p.perfil ?? antes.perfil;
       const unidadeFinal = p.unidadeId !== undefined ? p.unidadeId : antes.unidadeId;
-      if (perfilFinal === Perfil.OPERADORA && unidadeFinal === null) throw erroCampo("unidadeId", "Escolha a unidade da operadora");
+      if (perfilFinal === Perfil.OPERADORA && unidadeFinal === null)
+        throw erroCampo("unidadeId", "Escolha a unidade da operadora");
 
       const depois = await tx.usuario.update({ where: { id }, data: p, select: camposUsuario });
 

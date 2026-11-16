@@ -40,11 +40,9 @@ export const filtrosRevisoesSchema = z.object({
 
   /** Revisão alvo (1000, 6000, 12000 ou 18000). Vem da URL como texto. */
   km: opcional(
-    z.coerce
-      .number()
-      .refine((n) => (KMS_REVISAO as readonly number[]).includes(n), {
-        message: `km deve ser um destes: ${KMS_REVISAO.join(", ")}`,
-      }),
+    z.coerce.number().refine((n) => (KMS_REVISAO as readonly number[]).includes(n), {
+      message: `km deve ser um destes: ${KMS_REVISAO.join(", ")}`,
+    }),
   ),
 
   /** Situação na fila (PENDENTE, RETORNAR, AGENDADO...). */

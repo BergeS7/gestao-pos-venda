@@ -52,7 +52,9 @@ export const config = {
 function chaveSecreta(nome: string): string {
   const valor = obrigatoria(nome);
   if (valor.length < 32) {
-    throw new Error(`${nome} precisa ter pelo menos 32 caracteres. Gere uma com: node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`);
+    throw new Error(
+      `${nome} precisa ter pelo menos 32 caracteres. Gere uma com: node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`,
+    );
   }
   return valor;
 }

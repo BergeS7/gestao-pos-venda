@@ -65,7 +65,11 @@ export default function GraficoProducao({ porOperadora }: Props) {
   }
 
   return (
-    <div className="grafico" role="img" aria-label="Gráfico de barras: total, falou, agendados e concluídos por operadora">
+    <div
+      className="grafico"
+      role="img"
+      aria-label="Gráfico de barras: total, falou, agendados e concluídos por operadora"
+    >
       <Bar data={dados} options={opcoes} />
     </div>
   )

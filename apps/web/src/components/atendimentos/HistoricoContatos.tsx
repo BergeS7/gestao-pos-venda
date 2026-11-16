@@ -45,8 +45,16 @@ export default function HistoricoContatos({ tentativas }: { tentativas: Tentativ
                   </div>
                   {(t.dataAgendada || t.proximoContato) && (
                     <div className="small">
-                      {t.dataAgendada && <>Agendado para <strong>{diaBR(t.dataAgendada)}</strong></>}
-                      {t.proximoContato && <>Ligar de novo em <strong>{diaBR(t.proximoContato)}</strong></>}
+                      {t.dataAgendada && (
+                        <>
+                          Agendado para <strong>{diaBR(t.dataAgendada)}</strong>
+                        </>
+                      )}
+                      {t.proximoContato && (
+                        <>
+                          Ligar de novo em <strong>{diaBR(t.proximoContato)}</strong>
+                        </>
+                      )}
                     </div>
                   )}
                   {t.observacoes && <div className="small fst-italic text-secondary mt-1">“{t.observacoes}”</div>}

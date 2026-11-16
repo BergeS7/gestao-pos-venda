@@ -185,7 +185,10 @@ export function montarRelatorio(mes: string, ligacoes: LigacaoRelatorio[], opera
   }
 
   // Acumuladores: chave → contagem
-  const linhas = new Map<string, { operadora: OperadoraRelatorio; unidade: UnidadeRelatorio; c: ReturnType<typeof zerada> }>();
+  const linhas = new Map<
+    string,
+    { operadora: OperadoraRelatorio; unidade: UnidadeRelatorio; c: ReturnType<typeof zerada> }
+  >();
   const unidades = new Map<string, { unidade: UnidadeRelatorio; c: ReturnType<typeof zerada> }>();
   const operadoras = new Map<string, { operadora: OperadoraRelatorio; c: ReturnType<typeof zerada> }>();
   const total = zerada();
@@ -249,7 +252,9 @@ export function montarRelatorio(mes: string, ligacoes: LigacaoRelatorio[], opera
     total: comTaxas(total),
     causas: [...causas.values()].sort(
       (a, b) =>
-        porNome(a.operadora.nome, b.operadora.nome) || porNome(a.unidade.sigla, b.unidade.sigla) || b.quantidade - a.quantidade,
+        porNome(a.operadora.nome, b.operadora.nome) ||
+        porNome(a.unidade.sigla, b.unidade.sigla) ||
+        b.quantidade - a.quantidade,
     ),
     causasResumo: [...somaCausas.entries()]
       .map(([motivo, quantidade]) => ({ motivo, quantidade, percentual: quantidade / totalCausas }))

@@ -64,7 +64,8 @@ export default function FormContato({ motivos, versao, enviando, errosApi, onEnv
   if (voltaParaFila && !proximoContato) erros.proximoContato = 'Informe quando ligar de novo'
 
   /** Mensagem do campo: a local (depois de tentar enviar) ou a que veio da API. */
-  const erroDe = (campo: string, campoApi = campo) => (tentouEnviar ? erros[campo] : undefined) ?? errosApi[campoApi]?.[0]
+  const erroDe = (campo: string, campoApi = campo) =>
+    (tentouEnviar ? erros[campo] : undefined) ?? errosApi[campoApi]?.[0]
 
   function mudarFalou(valor: 'sim' | 'nao') {
     setFalou(valor)

@@ -1,0 +1,10 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "oxc", "import", "node"],
+  "ignorePatterns": ["src/generated/**", "dist/**"],
+  "rules": {
+    "no-console": "off",
+    "typescript/no-explicit-any": "warn",
+    "typescript/no-non-null-assertion": "off"
+  }
+}

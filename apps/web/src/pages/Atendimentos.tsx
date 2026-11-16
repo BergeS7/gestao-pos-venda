@@ -9,10 +9,7 @@ export default function Atendimentos() {
   return (
     <>
       <PageHeader title="Atendimentos" subtitle="Registro dos contatos com os clientes" />
-      <EmBreve
-        etapa="Etapa 8"
-        descricao="Conseguiu falar? · Agendou? · Motivo · Data agendada · Próximo contato."
-      />
+      <EmBreve etapa="Etapa 8" descricao="Conseguiu falar? · Agendou? · Motivo · Data agendada · Próximo contato." />
     </>
   )
 }

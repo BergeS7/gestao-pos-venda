@@ -110,13 +110,21 @@ export default function Usuarios() {
   }
 
   function alternarAtivo(u: UsuarioAdmin) {
-    if (u.ativo && !window.confirm(`Desativar ${u.nome}? A pessoa perde o acesso na hora e as revisões abertas da carteira dela voltam para "sem operadora".`)) {
+    if (
+      u.ativo &&
+      !window.confirm(
+        `Desativar ${u.nome}? A pessoa perde o acesso na hora e as revisões abertas da carteira dela voltam para "sem operadora".`,
+      )
+    ) {
       return
     }
     void executar(async () => {
       const r = await apiEnviar<{ revisoesLiberadas: number }>('PATCH', `/usuarios/${u.id}`, { ativo: !u.ativo })
       if (u.ativo) {
-        const extra = r.revisoesLiberadas > 0 ? ` ${plural(r.revisoesLiberadas, 'revisão voltou', 'revisões voltaram')} para "sem operadora".` : ''
+        const extra =
+          r.revisoesLiberadas > 0
+            ? ` ${plural(r.revisoesLiberadas, 'revisão voltou', 'revisões voltaram')} para "sem operadora".`
+            : ''
         return `Usuário "${u.nome}" desativado.${extra}`
       }
       return `Usuário "${u.nome}" reativado.`
@@ -166,7 +174,12 @@ export default function Usuarios() {
           {aviso && (
             <div className={`alert alert-${aviso.tipo} alert-dismissible`} role="status">
               {aviso.texto}
-              <button type="button" className="btn-close" onClick={() => setAviso(undefined)} aria-label="Fechar aviso" />
+              <button
+                type="button"
+                className="btn-close"
+                onClick={() => setAviso(undefined)}
+                aria-label="Fechar aviso"
+              />
             </div>
           )}
 
@@ -186,7 +199,8 @@ export default function Usuarios() {
             <div className="card border-0 shadow-sm mb-3">
               <div className="card-body">
                 <h2 className="h6 mb-3">
-                  <i className="bi bi-key me-2 text-primary" aria-hidden="true" /> Redefinir a senha de {painel.usuario.nome}
+                  <i className="bi bi-key me-2 text-primary" aria-hidden="true" /> Redefinir a senha de{' '}
+                  {painel.usuario.nome}
                 </h2>
                 <div style={{ maxWidth: 420 }}>
                   <CampoSenhaProvisoria
@@ -197,7 +211,12 @@ export default function Usuarios() {
                   />
                 </div>
                 <div className="d-flex flex-wrap gap-2 mt-3">
-                  <button type="button" className="btn btn-warning" disabled={enviando || !senhaNova} onClick={() => redefinir(painel.usuario)}>
+                  <button
+                    type="button"
+                    className="btn btn-warning"
+                    disabled={enviando || !senhaNova}
+                    onClick={() => redefinir(painel.usuario)}
+                  >
                     Redefinir senha
                   </button>
                   <button type="button" className="btn btn-link" onClick={() => abrir(undefined)}>
@@ -237,13 +256,17 @@ export default function Usuarios() {
                             <span className="fw-semibold">{u.nome}</span>
                             {u.id === eu?.id && <span className="badge text-bg-light border ms-2">você</span>}
                             {!u.ativo && <span className="badge text-bg-secondary ms-2">Inativo</span>}
-                            {u.ativo && u.trocarSenha && <span className="badge text-bg-warning ms-2">Senha provisória</span>}
+                            {u.ativo && u.trocarSenha && (
+                              <span className="badge text-bg-warning ms-2">Senha provisória</span>
+                            )}
                             {u.ativo && !u.temSenha && <span className="badge text-bg-danger ms-2">Sem senha</span>}
                             <div className="small text-secondary">{u.email}</div>
                           </td>
                           <td>{ROTULO_PERFIL[u.perfil]}</td>
                           <td>{u.unidade?.sigla ?? <span className="text-secondary">Todas</span>}</td>
-                          <td className="small text-nowrap">{u.ultimoAcesso ? dataHoraBR(u.ultimoAcesso) : 'Nunca entrou'}</td>
+                          <td className="small text-nowrap">
+                            {u.ultimoAcesso ? dataHoraBR(u.ultimoAcesso) : 'Nunca entrou'}
+                          </td>
                           <td className="text-end text-nowrap">
                             <button
                               type="button"

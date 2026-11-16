@@ -185,13 +185,7 @@ export const CODIGO_TROCAR_SENHA = 'TROCAR_SENHA'
 // ---------------------------------------------------------------------------
 
 /** Situações da fila (enum SituacaoRevisao do schema.prisma). */
-export type SituacaoRevisao =
-  | 'PENDENTE'
-  | 'RETORNAR'
-  | 'AGENDADO'
-  | 'NAO_AGENDADO'
-  | 'BUSCAR_CONTATO'
-  | 'CONCLUIDA'
+export type SituacaoRevisao = 'PENDENTE' | 'RETORNAR' | 'AGENDADO' | 'NAO_AGENDADO' | 'BUSCAR_CONTATO' | 'CONCLUIDA'
 
 /** Uma revisão da fila, como devolvida por GET /api/revisoes. Datas chegam como texto ISO. */
 export type Revisao = {

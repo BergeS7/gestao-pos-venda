@@ -54,7 +54,8 @@ export function lerToken(token: string | undefined): ConteudoToken | null {
   if (!token) return null;
   try {
     const conteudo = jwt.verify(token, config.jwtSecret, { algorithms: ["HS256"] });
-    if (typeof conteudo !== "object" || typeof conteudo.sub !== "string" || typeof conteudo.sv !== "string") return null;
+    if (typeof conteudo !== "object" || typeof conteudo.sub !== "string" || typeof conteudo.sv !== "string")
+      return null;
     return { sub: conteudo.sub, sv: conteudo.sv };
   } catch {
     return null;

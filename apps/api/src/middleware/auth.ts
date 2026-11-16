@@ -56,7 +56,16 @@ export async function usuarioDaSessao(req: Request): Promise<UsuarioLogado | nul
 
   const u = await prisma.usuario.findUnique({
     where: { id },
-    select: { id: true, nome: true, email: true, perfil: true, unidadeId: true, trocarSenha: true, ativo: true, senhaHash: true },
+    select: {
+      id: true,
+      nome: true,
+      email: true,
+      perfil: true,
+      unidadeId: true,
+      trocarSenha: true,
+      ativo: true,
+      senhaHash: true,
+    },
   });
   if (!u || !u.ativo || !u.senhaHash || impressaoDaSenha(u.senhaHash) !== conteudo.sv) return null;
 

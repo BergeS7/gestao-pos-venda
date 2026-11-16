@@ -21,6 +21,8 @@
     "apps/api/src/generated": true
   },
 
-  // Formatador de cada tipo de arquivo
+  // Formatador de cada tipo de arquivo. Prettier usa o .prettierrc.json de
+  // cada app (API com aspas duplas e ";", frontend com aspas simples e sem ";").
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
   "[prisma]": { "editor.defaultFormatter": "Prisma.prisma" }
 }

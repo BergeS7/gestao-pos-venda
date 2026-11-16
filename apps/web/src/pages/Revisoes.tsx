@@ -209,7 +209,10 @@ export default function Revisoes() {
     const { operador: _ignorado, ...outros } = filtros
     const filtrosApi = Object.fromEntries(Object.entries(outros).filter(([, v]) => v !== ''))
     void executar(async () => {
-      const r = await apiEnviar<ResultadoDistribuir>('POST', '/revisoes/distribuir', { operadorIds, filtros: filtrosApi })
+      const r = await apiEnviar<ResultadoDistribuir>('POST', '/revisoes/distribuir', {
+        operadorIds,
+        filtros: filtrosApi,
+      })
       setMostrarDistribuir(false)
       if (r.distribuidas === 0) return 'Não há revisões sem operadora nesses filtros.'
       const partes = r.porOperadora.map((p) => `${nomeOperadora(p.operadorId)}: ${p.quantidade}`).join(' · ')

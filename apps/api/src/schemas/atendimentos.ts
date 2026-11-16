@@ -66,7 +66,11 @@ export const registrarTentativaSchema = z
   .superRefine((d, ctx) => {
     if (d.resultado === ResultadoContato.SIM) {
       if (!d.conseguiuFalar) {
-        ctx.addIssue({ code: "custom", path: ["resultado"], message: "Para agendar, é preciso ter falado com o cliente" });
+        ctx.addIssue({
+          code: "custom",
+          path: ["resultado"],
+          message: "Para agendar, é preciso ter falado com o cliente",
+        });
       }
       if (!d.dataAgendada) {
         ctx.addIssue({ code: "custom", path: ["dataAgendada"], message: "Informe a data agendada" });

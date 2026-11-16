@@ -19,13 +19,7 @@
  */
 
 import { prisma } from "../db/prisma.js";
-import {
-  AcaoMotivo,
-  Perfil,
-  Prisma,
-  ResultadoContato,
-  SituacaoRevisao,
-} from "../generated/prisma/client.js";
+import { AcaoMotivo, Perfil, Prisma, ResultadoContato, SituacaoRevisao } from "../generated/prisma/client.js";
 import { ErroHttp } from "../lib/erros.js";
 import type { UsuarioLogado } from "../middleware/auth.js";
 import { ACOES, auditar } from "./auditoria.js";
@@ -167,7 +161,8 @@ export async function registrarTentativa(usuario: UsuarioLogado, revisaoId: numb
   let acaoMotivo: AcaoMotivo | null = null;
   if (p.motivoId) {
     const motivo = await prisma.motivo.findFirst({ where: { id: p.motivoId, ativo: true }, select: { acao: true } });
-    if (!motivo) throw new ErroHttp(400, "Dados inválidos na requisição", { campos: { motivoId: ["Motivo não encontrado"] } });
+    if (!motivo)
+      throw new ErroHttp(400, "Dados inválidos na requisição", { campos: { motivoId: ["Motivo não encontrado"] } });
     acaoMotivo = motivo.acao;
   }
 
@@ -227,7 +222,11 @@ export async function registrarTentativa(usuario: UsuarioLogado, revisaoId: numb
  * @throws ErroHttp 404 revisão não encontrada
  * @throws ErroHttp 409 alterada por outra pessoa (versão diferente)
  */
-export async function concluirRevisao(usuario: UsuarioLogado, revisaoId: number, { versao, concluida }: ConcluirParams) {
+export async function concluirRevisao(
+  usuario: UsuarioLogado,
+  revisaoId: number,
+  { versao, concluida }: ConcluirParams,
+) {
   await garantirAcesso(revisaoId, usuario);
 
   await prisma.$transaction(async (tx) => {

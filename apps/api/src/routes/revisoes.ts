@@ -35,18 +35,8 @@ import { celularBR, dataBR, ROTULO_SITUACAO } from "../lib/formatar.js";
 import { diaBR } from "../lib/datas.js";
 import { concluirSchema, idRevisaoSchema, registrarTentativaSchema } from "../schemas/atendimentos.js";
 import { concluirRevisao, detalharRevisao, registrarTentativa } from "../services/atendimentos.js";
-import {
-  atribuirSchema,
-  distribuirSchema,
-  filtrosRevisoesSchema,
-  listarRevisoesSchema,
-} from "../schemas/revisoes.js";
-import {
-  atribuirOperadora,
-  distribuirRevisoes,
-  listarParaExportar,
-  listarRevisoes,
-} from "../services/revisoes.js";
+import { atribuirSchema, distribuirSchema, filtrosRevisoesSchema, listarRevisoesSchema } from "../schemas/revisoes.js";
+import { atribuirOperadora, distribuirRevisoes, listarParaExportar, listarRevisoes } from "../services/revisoes.js";
 
 export const revisoesRouter = Router();
 

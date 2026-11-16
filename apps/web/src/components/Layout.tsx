@@ -34,13 +34,7 @@ export default function Layout() {
       <aside className={`sidebar ${menuAberto ? 'is-open' : ''}`} aria-label="Menu principal">
         <div className="sidebar-brand">
           {/* Logo original sobre a faixa cinza-clara, alinhada com a barra superior */}
-          <img
-            className="brand-logo"
-            src="/marca/logo.webp"
-            alt="Gestão Pós-Venda"
-            width={360}
-            height={127}
-          />
+          <img className="brand-logo" src="/marca/logo.webp" alt="Gestão Pós-Venda" width={360} height={127} />
           {/* Sem subtítulo aqui: o nome "Maranhão Motos" já aparece na barra superior */}
         </div>
 
@@ -64,9 +58,7 @@ export default function Layout() {
       </aside>
 
       {/* Fundo escuro atrás do menu aberto no celular; tocar nele fecha o menu */}
-      {menuAberto && (
-        <div className="sidebar-backdrop d-lg-none" onClick={() => setMenuAberto(false)} />
-      )}
+      {menuAberto && <div className="sidebar-backdrop d-lg-none" onClick={() => setMenuAberto(false)} />}
 
       {/* ---------- Área principal ---------- */}
       <div className="main">
@@ -92,7 +84,12 @@ export default function Layout() {
                 <span className="d-block small fw-semibold">{usuario.nome}</span>
                 <span className="d-block small text-secondary">{ROTULO_PERFIL[usuario.perfil]}</span>
               </span>
-              <Link to="/minha-senha" className="btn btn-sm btn-outline-secondary" title="Trocar senha" aria-label="Trocar senha">
+              <Link
+                to="/minha-senha"
+                className="btn btn-sm btn-outline-secondary"
+                title="Trocar senha"
+                aria-label="Trocar senha"
+              >
                 <i className="bi bi-key" aria-hidden="true" />
               </Link>
               <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => void sair()}>

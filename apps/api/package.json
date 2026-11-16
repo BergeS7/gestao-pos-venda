@@ -5,10 +5,12 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc",
+    "build": "tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/**/*.test.ts",
+    "lint": "oxlint --deny-warnings",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "db:setup": "powershell -ExecutionPolicy Bypass -File scripts/setup-db-local.ps1",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
@@ -39,9 +41,11 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.6.6",
     "@types/pg": "^8.23.1",
+    "oxlint": "^1.93.0",
     "prisma": "^7.10.1",
     "tsx": "^4.23.15",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
   },
   "private": true,
   "engines": {

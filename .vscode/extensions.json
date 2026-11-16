@@ -2,7 +2,7 @@
 {
   "recommendations": [
     "Prisma.prisma",              // destaque e formatação do schema.prisma
-    "oxc.oxc-vscode",             // mostra os avisos do oxlint (lint do frontend) no editor
+    "oxc.oxc-vscode",             // mostra os avisos do oxlint (API e frontend) no editor
     "esbenp.prettier-vscode",     // formatação de código
     "syler.sass-indented",        // suporte a Sass
     "streetsidesoftware.code-spell-checker-portuguese-brazilian" // corretor ortográfico pt-BR nos comentários

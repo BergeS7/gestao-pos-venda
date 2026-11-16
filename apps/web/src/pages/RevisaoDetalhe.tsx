@@ -207,7 +207,11 @@ export default function RevisaoDetalhe() {
                   {celularBR(cliente.celular)}
                   {cliente.celular && (
                     <span className="ms-2 d-inline-flex gap-1">
-                      <a className="btn btn-sm btn-outline-secondary" href={`tel:${cliente.celular}`} aria-label="Ligar">
+                      <a
+                        className="btn btn-sm btn-outline-secondary"
+                        href={`tel:${cliente.celular}`}
+                        aria-label="Ligar"
+                      >
                         <i className="bi bi-telephone" aria-hidden="true" />
                       </a>
                       {whatsapp && (
@@ -264,7 +268,12 @@ export default function RevisaoDetalhe() {
                 <dd>{diaBR(dados.proximoContato)}</dd>
               </dl>
               {!atender ? null : dados.concluida ? (
-                <button type="button" className="btn btn-outline-secondary" disabled={enviando} onClick={() => concluir(false)}>
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  disabled={enviando}
+                  onClick={() => concluir(false)}
+                >
                   <i className="bi bi-arrow-counterclockwise me-1" aria-hidden="true" /> Reabrir revisão
                 </button>
               ) : (

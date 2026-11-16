@@ -143,7 +143,13 @@ export async function gerarExcelProducao(relatorio: Relatorio, descricaoFiltro: 
     `Falou e não agendou: causas — ${periodo}${sufixo}`,
     ["Operadora", "Unidade", "Motivo"],
     [{ titulo: "Quantidade" }, { titulo: "% do total", porcentagem: true }],
-    relatorio.causas.map((c) => [c.operadora.nome, c.unidade.sigla, c.motivo, c.quantidade, c.quantidade / totalCausas]),
+    relatorio.causas.map((c) => [
+      c.operadora.nome,
+      c.unidade.sigla,
+      c.motivo,
+      c.quantidade,
+      c.quantidade / totalCausas,
+    ]),
     ["Total geral", "", "", totalCausas, totalCausas ? 1 : null],
   );
   abaCausas.getColumn(3).width = 34;

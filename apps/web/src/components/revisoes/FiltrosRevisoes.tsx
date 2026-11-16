@@ -110,7 +110,12 @@ export default function FiltrosRevisoes({
             <label htmlFor="f-km" className="form-label small mb-1">
               Revisão
             </label>
-            <select id="f-km" className="form-select" value={filtros.km} onChange={(e) => onMudar('km', e.target.value)}>
+            <select
+              id="f-km"
+              className="form-select"
+              value={filtros.km}
+              onChange={(e) => onMudar('km', e.target.value)}
+            >
               <option value="">Todas</option>
               {KMS_REVISAO.map((km) => (
                 <option key={km} value={km}>

@@ -19,7 +19,10 @@ export default function TabelaCausas({ causas, mostrarOperadora }: Props) {
 
   return (
     <div className="table-responsive">
-      <table className="table table-sm table-hover align-middle mb-0 tabela-producao" aria-label="Causas de falou e não agendou por operadora e unidade">
+      <table
+        className="table table-sm table-hover align-middle mb-0 tabela-producao"
+        aria-label="Causas de falou e não agendou por operadora e unidade"
+      >
         <thead>
           <tr>
             {mostrarOperadora && <th scope="col">Operadora</th>}

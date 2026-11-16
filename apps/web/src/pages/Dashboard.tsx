@@ -124,7 +124,12 @@ export default function Dashboard() {
               <label htmlFor="d-mes" className="form-label small mb-1">
                 Mês
               </label>
-              <select id="d-mes" className="form-select" value={mes} onChange={(e) => mudarFiltro('mes', e.target.value)}>
+              <select
+                id="d-mes"
+                className="form-select"
+                value={mes}
+                onChange={(e) => mudarFiltro('mes', e.target.value)}
+              >
                 {/* Mês vindo de um link antigo, fora da lista */}
                 {!meses.includes(mes) && <option value={mes}>{mesPorExtenso(mes)}</option>}
                 {meses.map((m) => (
@@ -298,8 +303,8 @@ export default function Dashboard() {
           )}
 
           <p className="small text-secondary mb-0">
-            Cada cliente conta uma vez no mês, mesmo com várias ligações. A operadora é quem fez a última ligação
-            do mês; os concluídos são os agendados no mês que já vieram à oficina.
+            Cada cliente conta uma vez no mês, mesmo com várias ligações. A operadora é quem fez a última ligação do
+            mês; os concluídos são os agendados no mês que já vieram à oficina.
           </p>
         </div>
       )}

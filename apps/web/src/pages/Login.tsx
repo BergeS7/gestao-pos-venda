@@ -45,13 +45,7 @@ export default function Login() {
       <form className="card border-0 shadow tela-login-card" onSubmit={enviar} noValidate>
         {/* Logo colorida (texto preto) sobre o fundo branco do cartão */}
         <div className="tela-login-marca">
-          <img
-            className="brand-logo"
-            src="/marca/logo.webp"
-            alt="Gestão Pós-Venda"
-            width={360}
-            height={127}
-          />
+          <img className="brand-logo" src="/marca/logo.webp" alt="Gestão Pós-Venda" width={360} height={127} />
           <div className="brand-sub">Maranhão Motos</div>
         </div>
 

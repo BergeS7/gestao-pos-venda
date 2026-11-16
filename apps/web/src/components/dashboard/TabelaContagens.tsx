@@ -40,7 +40,14 @@ type Props<L extends Contagem> = {
   legenda: string
 }
 
-export default function TabelaContagens<L extends Contagem>({ cabecalhos, nomes, chave, linhas, total, legenda }: Props<L>) {
+export default function TabelaContagens<L extends Contagem>({
+  cabecalhos,
+  nomes,
+  chave,
+  linhas,
+  total,
+  legenda,
+}: Props<L>) {
   /** Coluna da ordenação e direção. Sem coluna = ordem que veio da API (por nome). */
   const [ordem, setOrdem] = useState<{ campo: keyof Contagem; desc: boolean } | null>(null)
 

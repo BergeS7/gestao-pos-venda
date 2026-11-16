@@ -6,11 +6,11 @@
  * feitas à mão (nos comentários) e a comparação com montarRelatorio().
  *
  * Como rodar (na pasta apps/api):  npm run test
- * Usa o executor de testes que já vem no Node (node:test), sem banco.
+ * Usa o vitest (Etapa 11), sem banco. As comparações usam o node:assert.
  */
 
 import { strict as assert } from "node:assert";
-import { describe, it } from "node:test";
+import { describe, it } from "vitest";
 import { intervaloDoMes, montarRelatorio, type LigacaoRelatorio } from "./relatorios.js";
 
 // ---------------------------------------------------------------------------
@@ -123,14 +123,20 @@ describe("relatório de produção (outubro/2026 fictício)", () => {
   });
 
   it("totais por unidade, por operadora e geral", () => {
-    assert.deepEqual(r.porUnidade.map((u) => [u.unidade.sigla, ...numeros(u)]), [
-      ["STI", 5, 4, 2, 2],
-      ["ZDC", 4, 3, 2, 1],
-    ]);
-    assert.deepEqual(r.porOperadora.map((o) => [o.operadora.nome, ...numeros(o)]), [
-      ["Ana Exemplo", 4, 3, 2, 1],
-      ["Bia Exemplo", 5, 4, 2, 2],
-    ]);
+    assert.deepEqual(
+      r.porUnidade.map((u) => [u.unidade.sigla, ...numeros(u)]),
+      [
+        ["STI", 5, 4, 2, 2],
+        ["ZDC", 4, 3, 2, 1],
+      ],
+    );
+    assert.deepEqual(
+      r.porOperadora.map((o) => [o.operadora.nome, ...numeros(o)]),
+      [
+        ["Ana Exemplo", 4, 3, 2, 1],
+        ["Bia Exemplo", 5, 4, 2, 2],
+      ],
+    );
     assert.deepEqual(numeros(r.total), [9, 7, 4, 3]);
     assert.equal(r.total.naoFalou, 2);
   });

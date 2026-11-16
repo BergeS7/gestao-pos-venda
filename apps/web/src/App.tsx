@@ -30,13 +30,7 @@ import Usuarios from './pages/Usuarios.tsx'
 import Login from './pages/Login.tsx'
 import TrocarSenha from './pages/TrocarSenha.tsx'
 import NaoEncontrada from './pages/NaoEncontrada.tsx'
-
-/** Página guardada em `state.de` quando o login foi exigido; senão, o Dashboard. */
-function destinoDepoisDoLogin(state: unknown): string {
-  const de = (state as { de?: unknown } | null)?.de
-  // Só caminhos internos ("/revisoes?..."), nunca um endereço externo
-  return typeof de === 'string' && de.startsWith('/') && !de.startsWith('//') ? de : '/dashboard'
-}
+import { destinoDepoisDoLogin } from './lib/navegacao.ts'
 
 export default function App() {
   const { usuario, verificando, saiu } = useAuth()
@@ -57,7 +51,9 @@ export default function App() {
         <Route path="login" element={<Login />} />
         <Route
           path="*"
-          element={<Navigate to="/login" replace state={saiu ? undefined : { de: location.pathname + location.search }} />}
+          element={
+            <Navigate to="/login" replace state={saiu ? undefined : { de: location.pathname + location.search }} />
+          }
         />
       </Routes>
     )

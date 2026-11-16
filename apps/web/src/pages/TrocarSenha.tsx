@@ -33,7 +33,9 @@ export default function TrocarSenha({ obrigatoria = false }: { obrigatoria?: boo
   // Validação local, mostrada depois da primeira tentativa de enviar
   const local: Record<string, string | undefined> = {
     senhaAtual: senhaAtual ? undefined : 'Informe a senha atual',
-    novaSenha: problemaDaSenha(novaSenha) ?? (novaSenha === senhaAtual ? 'A nova senha precisa ser diferente da atual' : undefined),
+    novaSenha:
+      problemaDaSenha(novaSenha) ??
+      (novaSenha === senhaAtual ? 'A nova senha precisa ser diferente da atual' : undefined),
     confirmacao: confirmacao === novaSenha ? undefined : 'As senhas não são iguais',
   }
   const erroDe = (campo: string) => (tentou ? local[campo] : undefined) ?? erros[campo]?.[0]
@@ -80,7 +82,13 @@ export default function TrocarSenha({ obrigatoria = false }: { obrigatoria?: boo
 
         {(
           [
-            ['senhaAtual', obrigatoria ? 'Senha provisória' : 'Senha atual', senhaAtual, setSenhaAtual, 'current-password'],
+            [
+              'senhaAtual',
+              obrigatoria ? 'Senha provisória' : 'Senha atual',
+              senhaAtual,
+              setSenhaAtual,
+              'current-password',
+            ],
             ['novaSenha', 'Nova senha', novaSenha, setNovaSenha, 'new-password'],
             ['confirmacao', 'Repita a nova senha', confirmacao, setConfirmacao, 'new-password'],
           ] as const

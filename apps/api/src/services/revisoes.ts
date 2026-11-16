@@ -17,12 +17,7 @@ import { Prisma, SituacaoRevisao } from "../generated/prisma/client.js";
 import type { UsuarioLogado } from "../middleware/auth.js";
 import { ACOES, auditar } from "./auditoria.js";
 import { ErroHttp } from "../lib/erros.js";
-import type {
-  AtribuirParams,
-  DistribuirParams,
-  FiltrosRevisoes,
-  ListarRevisoesParams,
-} from "../schemas/revisoes.js";
+import type { AtribuirParams, DistribuirParams, FiltrosRevisoes, ListarRevisoesParams } from "../schemas/revisoes.js";
 
 // ---------------------------------------------------------------------------
 // Campos devolvidos
@@ -144,10 +139,7 @@ export async function listarParaExportar(filtros: FiltrosRevisoes) {
   const where = montarFiltro(filtros);
   const total = await prisma.revisaoAlvo.count({ where });
   if (total > MAX_EXPORTACAO) {
-    throw new ErroHttp(
-      413,
-      `A exportação tem ${total} linhas; o limite é ${MAX_EXPORTACAO}. Use mais filtros.`,
-    );
+    throw new ErroHttp(413, `A exportação tem ${total} linhas; o limite é ${MAX_EXPORTACAO}. Use mais filtros.`);
   }
   return prisma.revisaoAlvo.findMany({ where, orderBy: ordemPadrao, select: camposRevisao });
 }
@@ -189,7 +181,12 @@ export async function atribuirOperadora(autor: UsuarioLogado, { ids, operadorId 
       data: { operadorId, versao: { increment: 1 } },
     });
     await auditar(
-      { usuarioId: autor.id, acao: ACOES.REVISOES_ATRIBUIDAS, entidade: "revisoes_alvo", detalhes: { ids, operadorId, atualizadas: count } },
+      {
+        usuarioId: autor.id,
+        acao: ACOES.REVISOES_ATRIBUIDAS,
+        entidade: "revisoes_alvo",
+        detalhes: { ids, operadorId, atualizadas: count },
+      },
       tx,
     );
     return { atualizadas: count };
@@ -210,10 +207,7 @@ export async function distribuirRevisoes(autor: UsuarioLogado, { operadorIds, fi
   await garantirOperadorasAtivas(operadorIds);
 
   const where: Prisma.RevisaoAlvoWhereInput = {
-    AND: [
-      montarFiltro({ ...filtros, operador: "sem" }),
-      { situacao: { not: SituacaoRevisao.CONCLUIDA } },
-    ],
+    AND: [montarFiltro({ ...filtros, operador: "sem" }), { situacao: { not: SituacaoRevisao.CONCLUIDA } }],
   };
 
   return prisma.$transaction(async (tx) => {

@@ -94,7 +94,10 @@ export async function trocarSenha(usuario: UsuarioLogado, { senhaAtual, novaSenh
       data: { senhaHash: hash, trocarSenha: false },
       select: camposUsuarioLogado,
     });
-    await auditar({ usuarioId: usuario.id, acao: ACOES.SENHA_TROCADA, entidade: "usuarios", entidadeId: usuario.id }, tx);
+    await auditar(
+      { usuarioId: usuario.id, acao: ACOES.SENHA_TROCADA, entidade: "usuarios", entidadeId: usuario.id },
+      tx,
+    );
     return u;
   });
 
