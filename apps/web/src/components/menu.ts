@@ -26,7 +26,7 @@ export type MenuItem = {
 export const menu: MenuItem[] = [
   { to: '/dashboard', label: 'Dashboard', icon: 'bi-speedometer2' },
   { to: '/revisoes', label: 'Fila de revisões', icon: 'bi-people' },
-  { to: '/atendimentos', label: 'Atendimentos', icon: 'bi-headset' },
+  { to: '/agenda', label: 'Agenda do dia', icon: 'bi-calendar2-check' },
   { to: '/importacoes', label: 'Importações', icon: 'bi-upload', permissao: 'importar' },
   { to: '/usuarios', label: 'Usuários', icon: 'bi-person-gear', permissao: 'usuarios' },
 ]

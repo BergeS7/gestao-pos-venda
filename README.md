@@ -72,6 +72,18 @@ Mesmos campos da planilha atual, agora com validação:
 
 Cada tentativa fica no **histórico** do registro, em vez de virar uma linha nova.
 
+**Agenda do dia** (`/agenda`): a tela de trabalho da operadora, que junta a fila no que fazer hoje:
+
+| Seção | Quem aparece |
+|---|---|
+| Ligar hoje | Retornos marcados para hoje e os atrasados (mais atrasados primeiro) |
+| Vêm hoje à oficina | Agendados para hoje |
+| Agendados que ainda não vieram | Data agendada já passou e a revisão não foi concluída: confirmar se veio ou remarcar |
+| Buscar contato | Telefone não funciona |
+| Ainda sem contato | Ninguém ligou ainda |
+
+Cada cliente tem atalhos para ligar, para o WhatsApp e para a tela do cliente. A operadora vê só a carteira dela; Gestor, Diretoria e Admin filtram por unidade e operadora.
+
 ### 2.4 Dashboard e produção mensal
 Reproduz o relatório de produção atual, mas calculado automaticamente:
 - Por **operadora × unidade**: total de clientes, conseguiu falar, não conseguiu, agendados, concluídos.
@@ -310,6 +322,7 @@ Todas as rotas, menos `/api/health` e `/api/auth/*`, exigem login. Sem login a r
 | `GET /api/auditoria` | Últimas alterações, paginado (só Admin) |
 | `GET /api/revisoes` | Fila de revisões com veículo, cliente, unidade e operadora (a operadora recebe só a carteira dela). Aceita `busca`, `unidade`, `operador` (id ou `sem`), `km`, `situacao`, `mesVenda` (AAAA-MM), `pagina` e `porPagina` (máximo 100) |
 | `GET /api/revisoes/exportar` | Baixa a fila filtrada em CSV (mesmos filtros, até 20.000 linhas, sem CPF) |
+| `GET /api/revisoes/agenda` | Agenda do dia: seções `ligarHoje`, `agendadosHoje`, `agendadosPassados`, `buscarContato` e `semContato` (até 50 cada, com o total), mais `proximosDias`. Aceita `unidade` e `operador`; a operadora recebe só a carteira dela |
 | `PATCH /api/revisoes/atribuir` | Corpo `{ ids, operadorId }`: passa as revisões para uma operadora (`null` tira a operadora) |
 | `POST /api/revisoes/distribuir` | Corpo `{ operadorIds, filtros }`: divide em partes iguais as revisões sem operadora do filtro |
 | `GET /api/relatorios/producao` | Relatório mensal de produção (Dashboard). Aceita `mes` (AAAA-MM, padrão: mês atual), `unidade` e `operador`. A operadora recebe só os próprios números |

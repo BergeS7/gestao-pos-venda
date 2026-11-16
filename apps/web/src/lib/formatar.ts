@@ -109,3 +109,22 @@ export function mesPorExtenso(mes: string): string {
     timeZone: 'UTC',
   })
 }
+
+/**
+ * Dias entre duas datas só dia (AAAA-MM-DD ou ISO à meia-noite UTC).
+ * Positivo = `data` ficou para trás. Ex.: diasAtras('2026-11-14', '2026-11-16') → 2
+ */
+export function diasAtras(data: string, hoje: string): number {
+  const dia = (s: string) => Date.parse(`${s.slice(0, 10)}T00:00:00Z`)
+  return Math.round((dia(hoje) - dia(data)) / 86_400_000)
+}
+
+/** "2026-11-16" → "segunda-feira, 16 de novembro" */
+export function diaPorExtenso(dia: string): string {
+  return new Date(`${dia}T12:00:00Z`).toLocaleDateString('pt-BR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    timeZone: 'UTC',
+  })
+}

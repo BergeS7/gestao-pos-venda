@@ -12,6 +12,7 @@
  * |--------|-----------------|---------------------------------------------------|---------------------------|
  * | GET    | /               | Lista a fila (filtros + paginação)                | todos*                    |
  * | GET    | /exportar       | Baixa a fila filtrada em CSV (abre no Excel)      | todos*                    |
+ * | GET    | /agenda         | Agenda do dia: ligar hoje, agendados, etc.        | todos*                    |
  * | PATCH  | /atribuir       | Atribui revisões selecionadas a uma operadora     | Gestor, Admin             |
  * | POST   | /distribuir     | Divide as revisões sem operadora entre operadoras | Gestor, Admin             |
  * | GET    | /:id            | Tela do cliente: revisão + histórico              | todos*                    |
@@ -23,7 +24,7 @@
  *     A DIRETORIA só consulta.
  *
  * Erros de validação respondem 400; os demais caem no tratador do app.ts.
- * As rotas com :id ficam por último para que "/exportar" não seja lido como id.
+ * As rotas com :id ficam por último para que "/exportar" e "/agenda" não sejam lidos como id.
  */
 
 import { Router, type Request } from "express";
@@ -35,7 +36,14 @@ import { celularBR, dataBR, ROTULO_SITUACAO } from "../lib/formatar.js";
 import { diaBR } from "../lib/datas.js";
 import { concluirSchema, idRevisaoSchema, registrarTentativaSchema } from "../schemas/atendimentos.js";
 import { concluirRevisao, detalharRevisao, registrarTentativa } from "../services/atendimentos.js";
-import { atribuirSchema, distribuirSchema, filtrosRevisoesSchema, listarRevisoesSchema } from "../schemas/revisoes.js";
+import {
+  agendaSchema,
+  atribuirSchema,
+  distribuirSchema,
+  filtrosRevisoesSchema,
+  listarRevisoesSchema,
+} from "../schemas/revisoes.js";
+import { agendaDoDia } from "../services/agenda.js";
 import { atribuirOperadora, distribuirRevisoes, listarParaExportar, listarRevisoes } from "../services/revisoes.js";
 
 export const revisoesRouter = Router();
@@ -101,6 +109,18 @@ revisoesRouter.get("/exportar", async (req, res) => {
   // attachment = o navegador baixa o arquivo em vez de abrir na tela
   res.setHeader("Content-Disposition", `attachment; filename="fila-revisoes-${hoje}.csv"`);
   res.send(gerarCsv(colunasExportacao, linhas));
+});
+
+/**
+ * GET /api/revisoes/agenda
+ *
+ * Query (opcionais): unidade (sigla), operador (id ou "sem").
+ * Resposta 200: { hoje, secoes: { ligarHoje, agendadosHoje, agendadosPassados,
+ *   buscarContato, semContato } (cada uma { total, itens }), proximosDias, limitePorSecao }
+ * Regras de cada seção: services/agenda.ts.
+ */
+revisoesRouter.get("/agenda", async (req, res) => {
+  res.json(await agendaDoDia(filtrarCarteira(req, validar(agendaSchema, req.query))));
 });
 
 /**

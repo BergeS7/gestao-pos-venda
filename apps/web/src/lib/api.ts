@@ -327,3 +327,21 @@ export type Relatorio = {
   causas: { operadora: OperadoraRelatorio; unidade: UnidadeRelatorio; motivo: string; quantidade: number }[]
   causasResumo: { motivo: string; quantidade: number; percentual: number }[]
 }
+
+// ---------------------------------------------------------------------------
+// Agenda do dia — espelha services/agenda.ts da API
+// ---------------------------------------------------------------------------
+
+/** Seções da agenda, na ordem em que aparecem na tela. */
+export type ChaveSecaoAgenda = 'ligarHoje' | 'agendadosHoje' | 'agendadosPassados' | 'buscarContato' | 'semContato'
+
+/** GET /api/revisoes/agenda */
+export type Agenda = {
+  /** O dia da agenda (AAAA-MM-DD, horário do Maranhão). */
+  hoje: string
+  /** Cada seção: até `limitePorSecao` revisões e o total real. */
+  secoes: Record<ChaveSecaoAgenda, { total: number; itens: Revisao[] }>
+  /** Retornos marcados para os próximos 7 dias (a partir de amanhã). */
+  proximosDias: number
+  limitePorSecao: number
+}

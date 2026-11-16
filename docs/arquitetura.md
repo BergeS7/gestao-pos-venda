@@ -90,6 +90,7 @@ gestao-pos-venda/
 │   │   │   │   ├── usuarios.ts   Cadastro; nunca ficar sem Admin; desativar libera a carteira
 │   │   │   │   ├── auditoria.ts  Grava e lista "quem alterou o quê e quando"
 │   │   │   │   ├── revisoes.ts   Filtros, paginação, atribuição e distribuição
+│   │   │   │   ├── agenda.ts     Agenda do dia: o que fazer hoje, em seções
 │   │   │   │   ├── relatorios.ts Relatório mensal: regra do mês e contagens (cálculo puro)
 │   │   │   │   ├── relatorios.test.ts Confere o relatório com um mês fictício feito à mão
 │   │   │   │   ├── relatoriosExcel.ts Monta o .xlsx de 4 abas (exceljs)
@@ -146,6 +147,7 @@ gestao-pos-venda/
 │           │   ├── BadgeSituacao.tsx Etiqueta colorida da situação
 │           │   ├── Paginacao.tsx "1–20 de N" com anterior/próxima
 │           │   ├── revisoes/     Peças da fila: filtros, tabela, painel Distribuir
+│           │   ├── agenda/       Seção da Agenda do dia (lista com atalhos de ligar e WhatsApp)
 │           │   ├── atendimentos/ Formulário "Registrar contato" e histórico
 │           │   ├── dashboard/    Cards, gráficos (funil e causas) e tabelas de produção
 │           │   └── usuarios/     Formulário de usuário, senha provisória, auditoria
@@ -343,7 +345,7 @@ index.html
                              ├─ /dashboard     → Dashboard.tsx
                              ├─ /revisoes      → Revisoes.tsx (operadora: "Minha carteira")
                              ├─ /revisoes/:id  → RevisaoDetalhe.tsx
-                             ├─ /atendimentos  → Atendimentos.tsx
+                             ├─ /agenda        → Agenda.tsx (Agenda do dia; /atendimentos redireciona)
                              ├─ /importacoes   → <ExigirPermissao importar> Importacoes.tsx
                              ├─ /usuarios      → <ExigirPermissao usuarios> Usuarios.tsx
                              ├─ /minha-senha   → TrocarSenha.tsx
@@ -404,7 +406,7 @@ O Bootstrap usa `!default` nas variáveis, então as que definimos **antes** del
 | ~~4~~ | ✅ PostgreSQL + Prisma: concluída (ver seção 3) |
 | 6 | Upload (`multer`), leitura de planilhas (`exceljs` já instalado na Etapa 10, `csv-parse`). O `zod` já entrou na Etapa 7 |
 | ~~7~~ | ✅ Fila de revisões: `schemas/`, `lib/`, rotas de catálogo, atribuir, distribuir e exportar |
-| ~~8~~ | ✅ Atendimentos: `tentativas_contato`, tela do cliente, proteção contra sobrescrita (409) |
+| ~~8~~ | ✅ Atendimentos: `tentativas_contato`, tela do cliente, proteção contra sobrescrita (409). Depois: Agenda do dia (`services/agenda.ts`) |
 | ~~9~~ | ✅ Login (JWT em cookie `httpOnly`), `middleware/auth.ts`, perfis, tela de Usuários, tabela `auditoria` |
 | ~~10~~ | ✅ Dashboard: `services/relatorios.ts` (cálculo puro com testes), Excel com `exceljs`, gráficos com Chart.js |
 | 11 | ✅ `vitest`, oxlint e Prettier nos dois apps; backup e teste de restauração; API serve as telas em produção com `helmet`; `prisma/producao.ts`. Falta: hospedagem (TI) e piloto |

@@ -24,7 +24,7 @@ import Layout from './components/Layout.tsx'
 import Dashboard from './pages/Dashboard.tsx'
 import Revisoes from './pages/Revisoes.tsx'
 import RevisaoDetalhe from './pages/RevisaoDetalhe.tsx'
-import Atendimentos from './pages/Atendimentos.tsx'
+import AgendaDoDia from './pages/Agenda.tsx'
 import Importacoes from './pages/Importacoes.tsx'
 import Usuarios from './pages/Usuarios.tsx'
 import Login from './pages/Login.tsx'
@@ -76,7 +76,9 @@ export default function App() {
         <Route path="revisoes" element={<Revisoes />} />
         {/* Tela do cliente: registrar contato e histórico (Etapa 8) */}
         <Route path="revisoes/:id" element={<RevisaoDetalhe />} />
-        <Route path="atendimentos" element={<Atendimentos />} />
+        <Route path="agenda" element={<AgendaDoDia />} />
+        {/* Endereço antigo da página (antes "Atendimentos") */}
+        <Route path="atendimentos" element={<Navigate to="/agenda" replace />} />
         <Route
           path="importacoes"
           element={

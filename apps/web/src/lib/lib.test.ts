@@ -11,7 +11,17 @@
 
 import { describe, expect, it } from 'vitest'
 import type { Perfil, UsuarioLogado } from './api.ts'
-import { celularBR, celularWhatsApp, diaBR, kmBR, mesPorExtenso, plural, porcentagem } from './formatar.ts'
+import {
+  celularBR,
+  celularWhatsApp,
+  diaBR,
+  diaPorExtenso,
+  diasAtras,
+  kmBR,
+  mesPorExtenso,
+  plural,
+  porcentagem,
+} from './formatar.ts'
 import { destinoDepoisDoLogin } from './navegacao.ts'
 import { pode, type Permissao } from './permissoes.ts'
 import { gerarSenhaProvisoria, problemaDaSenha } from './senhas.ts'
@@ -89,6 +99,14 @@ describe('formatar', () => {
     expect(celularBR('9830000001')).toBe('(98) 3000-0001')
     expect(celularWhatsApp('(98) 90000-0001')).toBe('5598900000001')
     expect(celularWhatsApp('123')).toBeUndefined()
+  })
+
+  it('dias de atraso (Agenda do dia) e dia por extenso', () => {
+    expect(diasAtras('2026-11-14', '2026-11-16')).toBe(2)
+    expect(diasAtras('2026-11-16T00:00:00.000Z', '2026-11-16')).toBe(0)
+    expect(diasAtras('2026-11-20', '2026-11-16')).toBe(-4)
+    expect(diasAtras('2026-02-28', '2026-03-01')).toBe(1)
+    expect(diaPorExtenso('2026-11-16')).toBe('segunda-feira, 16 de novembro')
   })
 
   it('plural e km', () => {

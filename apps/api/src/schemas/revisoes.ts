@@ -69,6 +69,14 @@ export const listarRevisoesSchema = filtrosRevisoesSchema.extend({
 export type ListarRevisoesParams = z.infer<typeof listarRevisoesSchema>;
 
 // ---------------------------------------------------------------------------
+// Agenda do dia: só unidade e operadora
+// ---------------------------------------------------------------------------
+
+export const agendaSchema = filtrosRevisoesSchema.pick({ unidade: true, operador: true });
+
+export type FiltrosAgenda = z.infer<typeof agendaSchema>;
+
+// ---------------------------------------------------------------------------
 // Atribuição manual: revisões selecionadas → uma operadora
 // ---------------------------------------------------------------------------
 

@@ -335,3 +335,31 @@
     color: $secondary;
   }
 }
+
+// ---------- Agenda do dia (pages/Agenda.tsx, components/agenda/) ----------
+// Cards de resumo do topo: clicáveis (levam até a seção)
+.resumo-agenda {
+  transition: transform 0.1s ease;
+
+  &:hover,
+  &:focus-visible {
+    transform: translateY(-1px);
+  }
+}
+
+// Ao pular para uma seção pelo resumo, ela não fica escondida atrás da barra superior
+.secao-agenda {
+  scroll-margin-top: calc(#{$topbar-height} + 1rem);
+}
+
+.tabela-agenda {
+  font-size: 0.9rem;
+
+  th {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: $mm-cinza-escuro;
+    white-space: nowrap;
+  }
+}

@@ -50,7 +50,7 @@ Dentro de `apps/`:
 - [x] Tema em `src/styles/`: `_variables.scss` (cores da marca e fonte Montserrat) → Bootstrap → `_layout.scss`
 - [x] Importar `main.scss` no `main.tsx`
 - [x] **Layout base** (`components/Layout.tsx`): menu lateral escuro, barra superior com faixa vermelha e menu recolhível no celular
-- [x] Páginas: Dashboard, Fila de revisões, Atendimentos, Importações, Usuários e 404
+- [x] Páginas: Dashboard, Fila de revisões, Atendimentos (hoje "Agenda do dia"), Importações, Usuários e 404
 - [x] Proxy `/api` → `http://localhost:3333` no `vite.config.ts`
 - [x] Dashboard chama `/api/health` e mostra "API ok" (ou o aviso de API fora do ar)
 
@@ -129,6 +129,7 @@ Frontend:
 - [x] Atualizar a situação da revisão (`agendado`, `retornar`, `nao_agendado`, `buscar_contato`), conforme a **ação do motivo** (`motivos.acao`)
 - [x] Marcar a revisão como **concluída** à mão (e reabrir)
 - [ ] Concluir automaticamente pelo espelhamento do mês seguinte. *Depende da Etapa 6 (importação).*
+- [x] **Agenda do dia** (`/agenda`, antes "Atendimentos"): ligar hoje (com atrasados), vêm hoje à oficina, agendados que ainda não vieram, buscar contato e ainda sem contato; filtros de unidade e operadora; a operadora vê só a carteira dela
 - [x] **Proteção contra sobrescrita:** gravar só se a `versao` não mudou; se mudou, responder 409, avisar o usuário e oferecer "Recarregar" sem perder o que foi digitado
 
 > Testado em duas abas: a segunda gravação é bloqueada com aviso, e o contato da primeira aparece depois de recarregar.
