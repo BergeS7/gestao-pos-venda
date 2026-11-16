@@ -15,6 +15,12 @@
 // Carrega o arquivo .env para dentro de process.env.
 // Precisa rodar antes de qualquer leitura de process.env abaixo.
 import "dotenv/config";
+import { existsSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+/** Pasta do build do frontend: apps/web/dist (vale tanto rodando de src/ quanto de dist/). */
+const WEB_DIST_PADRAO = resolve(dirname(fileURLToPath(import.meta.url)), "../../web/dist");
 
 /** Configurações tipadas da aplicação. */
 export const config = {
@@ -46,7 +52,23 @@ export const config = {
 
   /** Tempo de validade do login, em horas. Padrão: 10 (um turno de trabalho com folga). */
   sessaoHoras: Number(process.env.SESSAO_HORAS ?? 10),
+
+  /**
+   * Pasta com o build do frontend (npm run build em apps/web), Etapa 11.
+   * Em produção a API entrega as telas e a API no MESMO endereço: o cookie de
+   * sessão (SameSite=Strict) só funciona assim, sem CORS e sem dois domínios.
+   */
+  webDist: process.env.WEB_DIST ?? WEB_DIST_PADRAO,
 };
+
+/**
+ * A API serve o frontend? Sim em produção, quando o build existe.
+ * SERVIR_FRONTEND=true força (para testar localmente); =false desliga
+ * (se o frontend for hospedado em outro lugar).
+ */
+export const servirFrontend =
+  process.env.SERVIR_FRONTEND === "true" ||
+  (process.env.SERVIR_FRONTEND !== "false" && config.nodeEnv === "production" && existsSync(config.webDist));
 
 /** Lê uma chave secreta obrigatória e recusa chaves curtas demais (fáceis de adivinhar). */
 function chaveSecreta(nome: string): string {

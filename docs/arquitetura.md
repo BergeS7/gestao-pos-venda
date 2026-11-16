@@ -109,10 +109,19 @@ gestao-pos-venda/
 │   │   ├── prisma/
 │   │   │   ├── schema.prisma     Definição das tabelas
 │   │   │   ├── migrations/       Histórico de alterações do banco (SQL versionado)
-│   │   │   └── seed.ts           Dados iniciais (unidades, motivos, exemplos fictícios)
+│   │   │   ├── dados-base.ts     Unidades e motivos (reais, não pessoais), usados pelo seed e pela produção
+│   │   │   ├── seed.ts           Desenvolvimento: dados base + exemplos fictícios (recusa rodar em produção)
+│   │   │   ├── producao.ts       Produção: dados base + primeiro Admin (Etapa 11)
+│   │   │   └── tsconfig.json     Confere os tipos destes scripts no typecheck
 │   │   ├── scripts/
-│   │   │   └── setup-db-local.ps1  Cria usuário e banco local e grava o .env
+│   │   │   ├── setup-db-local.ps1  Cria usuário e banco local e grava o .env
+│   │   │   ├── backup-db.ps1       Backup do banco (pg_dump), guarda 30 dias
+│   │   │   ├── testar-restauracao.ps1 Restaura o último backup num banco temporário e compara
+│   │   │   └── lib-banco.ps1       Lê a DATABASE_URL do .env (usado pelos dois acima)
 │   │   ├── prisma.config.ts      Configuração do Prisma CLI
+│   │   ├── vitest.config.ts      Testes automáticos (arquivos *.test.ts em src/)
+│   │   ├── tsconfig.build.json   Build de produção sem os testes
+│   │   ├── .oxlintrc.json / .prettierrc.json  Lint e formatação
 │   │   ├── .env.example          Modelo das variáveis de ambiente (vai pro Git)
 │   │   ├── .env                  Valores reais locais (NÃO vai pro Git)
 │   │   ├── tsconfig.json         Configuração do TypeScript
@@ -156,6 +165,7 @@ gestao-pos-venda/
 │
 ├── docs/                         Documentação
 │   ├── arquitetura.md            (este arquivo)
+│   ├── implantacao.md            Como publicar, produção e backups (Etapa 11)
 │   ├── regras-de-negocio.md      Lógica extraída das planilhas reais
 │   ├── paleta-de-cores.txt
 │   ├── marca/logo-original.webp  Logo original (fundo transparente), fonte das versões em apps/web/public/marca/
@@ -163,6 +173,8 @@ gestao-pos-venda/
 ├── scripts/
 │   └── gerar-marca.py            Gera a logo das telas e os ícones a partir da logo original
 ├── Documentos/                   Planilhas REAIS (ignorada pelo Git, tem CPF/telefone)
+├── backups/                      Backups do banco (ignorada pelo Git, tem dados pessoais)
+├── .prettierignore               O que o Prettier não formata
 ├── .vscode/                      Configuração do VS Code: terminal cmd, tarefas e extensões
 ├── package.json                  Scripts da raiz: "npm run dev" sobe API + web juntos (concurrently)
 ├── README.md                     Visão geral e como rodar
@@ -228,7 +240,7 @@ app.ts
 - **Seed idempotente:** usa `upsert`, então pode rodar várias vezes. Só tem dados fictícios.
 
 ### Decisões e boas práticas
-- **`app.ts` separado de `server.ts`:** permite testar o app sem abrir porta (Etapa 6, com `vitest` + `supertest`).
+- **`app.ts` separado de `server.ts`:** permite testar o app sem abrir porta (testes de rota com `vitest` + `supertest` quando a importação chegar, Etapa 6).
 - **Configuração centralizada (`config.ts`):** no código da API, nenhum outro arquivo lê `process.env`. A exceção é o `prisma.config.ts`, que é do Prisma CLI. As variáveis ficam documentadas em `.env.example`, e as obrigatórias (`DATABASE_URL`) param a API na inicialização com uma mensagem clara.
 - **Conexão única com o banco (`db/prisma.ts`):** uma instância do PrismaClient para toda a API, evitando esgotar as conexões.
 - **A listagem devolve só o necessário:** `select` explícito, sem CPF, com paginação limitada a 100 itens.
@@ -272,6 +284,20 @@ Toda chamada seguinte: o navegador manda o cookie sozinho
 - **Excel no servidor** (`services/relatoriosExcel.ts` → `exceljs`): as taxas vão como número com formato `0.0%`, para quem abrir poder ordenar e somar. Só contagens, nenhum dado de cliente.
 - **Operadora só vê os próprios números:** como na fila, a rota troca o filtro `operador` pelo id dela.
 
+### Qualidade (Etapa 11)
+- **Testes ao lado do código:** `arquivo.test.ts` na mesma pasta do `arquivo.ts`, rodados pelo `vitest` (`npm run test`). Testam regras puras, sem banco: relatório, datas, CSV anti-fórmula, validações (`schemas/`), limite de login; na web, permissões, senhas, formatos e o destino depois do login.
+- **Lint com oxlint, não ESLint:** o projeto usa o TypeScript 7 (compilador nativo), e o `typescript-eslint` ainda depende da API em JavaScript do TypeScript, que essa versão não tem. O oxlint lê TypeScript sozinho, aplica as mesmas regras e entende os comentários `eslint-disable`. Configuração em `.oxlintrc.json` de cada app.
+- **Prettier com o estilo de cada app:** API com aspas duplas e `;`, frontend com aspas simples e sem `;` (`.prettierrc.json` em cada app; ignorados em `.prettierignore`). `endOfLine: auto` evita brigas entre Windows (CRLF) e o Git.
+- **`npm run check`** roda tudo antes do commit: formato, lint, tipos (inclusive `prisma/`), testes e build.
+- **Build sem testes:** `tsconfig.build.json` exclui `*.test.ts` do `dist/`.
+
+### Produção (Etapa 11)
+- **Um endereço só:** com `NODE_ENV=production`, a API também entrega o build do frontend (`config.servirFrontend`). O cookie de sessão é `SameSite=Strict`, então telas e API precisam estar no mesmo site. `/assets` tem cache de 1 ano (nomes com hash) e o `index.html` nunca fica em cache; qualquer rota de tela devolve o `index.html` para o React Router.
+- **Cabeçalhos de segurança (`helmet`):** CSP só com o próprio site e as fontes do Google, `frame-ancestors 'none'`, HSTS, `nosniff`.
+- **Erros 4xx do Express respeitados:** arquivo inexistente em `/assets` responde 404 e corpo acima de 100 kB responde 413, em vez de 500.
+- **Dados de produção separados do seed:** `prisma/dados-base.ts` (unidades e motivos) é usado pelo seed e pelo `prisma/producao.ts`, que cria só o primeiro Admin (senha provisória). O seed se recusa a rodar com `NODE_ENV=production`.
+- **Backup:** `scripts/backup-db.ps1` (pg_dump, formato custom, guarda 30 dias) e `scripts/testar-restauracao.ps1` (restaura num banco temporário e compara as tabelas). Detalhes em [implantacao.md](implantacao.md).
+
 ### Camadas da API
 ```
 src/
@@ -297,7 +323,8 @@ Regra: **rota fina, serviço gordo**. A rota só traduz HTTP; a regra de negóci
 | `bootstrap-icons` | Ícones (`<i className="bi bi-people" />`) |
 | `sass` | Pré-processador CSS: variáveis, aninhamento, mixins |
 | `vite` | Servidor de desenvolvimento e build |
-| `oxlint` | Verifica problemas no código (`npm run lint`) |
+| `oxlint` | Verifica problemas no código (`npm run lint`); avisos bloqueiam o `npm run check` |
+| `vitest` | Testes automáticos das funções de `src/lib/` (`npm run test`) |
 | `chart.js` + `react-chartjs-2` | Gráficos do Dashboard (Etapa 10). Peças registradas em `lib/graficos.ts` |
 
 ### Como a tela é montada
@@ -379,7 +406,7 @@ O Bootstrap usa `!default` nas variáveis, então as que definimos **antes** del
 | ~~7~~ | ✅ Fila de revisões: `schemas/`, `lib/`, rotas de catálogo, atribuir, distribuir e exportar |
 | ~~8~~ | ✅ Atendimentos: `tentativas_contato`, tela do cliente, proteção contra sobrescrita (409) |
 | ~~9~~ | ✅ Login (JWT em cookie `httpOnly`), `middleware/auth.ts`, perfis, tela de Usuários, tabela `auditoria` |
-| ~~10~~ | ✅ Dashboard: `services/relatorios.ts` (cálculo puro + testes com `node:test`), Excel com `exceljs`, gráficos com Chart.js |
-| 11 | Hospedagem da API e do frontend, backup do banco |
+| ~~10~~ | ✅ Dashboard: `services/relatorios.ts` (cálculo puro com testes), Excel com `exceljs`, gráficos com Chart.js |
+| 11 | ✅ `vitest`, oxlint e Prettier nos dois apps; backup e teste de restauração; API serve as telas em produção com `helmet`; `prisma/producao.ts`. Falta: hospedagem (TI) e piloto |
 
 Modelo de dados planejado: [README.md, seção 3](../README.md#3-modelo-de-dados-rascunho).

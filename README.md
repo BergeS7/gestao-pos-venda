@@ -225,8 +225,11 @@ Esse comando sobe **a API (porta 3333) e o frontend (porta 5173) juntos**, no me
 | `npm run dev:api` / `npm run dev:web` | Sobe só um dos dois |
 | `npm run install:all` | Instala as dependências dos dois apps (roda sozinho após `npm install`) |
 | `npm run build` | Compila a API e gera a versão de produção do frontend |
-| `npm run check` | Conferência antes do commit: typecheck e testes da API, lint e build do frontend |
+| `npm run check` | Conferência antes do commit: formato (Prettier), lint (oxlint), tipos, testes e build dos dois apps |
+| `npm run test` | Só os testes automáticos (vitest) da API e do frontend |
+| `npm run format` | Formata o código com o Prettier (o VS Code já formata ao salvar) |
 | `npm run db:setup` / `db:migrate` / `db:seed` / `db:studio` | Atalhos para os comandos de banco da API |
+| `npm run db:backup` / `db:testar-backup` | Backup do banco e teste de restauração (ver [docs/implantacao.md](docs/implantacao.md)) |
 
 Os comandos de cada app continuam funcionando dentro das pastas deles, conforme abaixo.
 
@@ -276,13 +279,18 @@ Teste em <http://localhost:3333/api/health>. As outras rotas exigem login (a res
 | `npm run dev` | Sobe a API em modo desenvolvimento e reinicia a cada alteração |
 | `npm run build` | Compila o TypeScript para `dist/` |
 | `npm start` | Roda a versão compilada |
-| `npm run typecheck` | Confere os tipos sem compilar |
+| `npm run typecheck` | Confere os tipos sem compilar (código e scripts do banco) |
+| `npm run lint` | Verifica o código (oxlint) |
 | `npm run db:setup` | Cria o banco local e o usuário do sistema (uma vez) |
 | `npm run db:migrate` | Aplica as migrações e, se o schema mudou, cria uma nova |
 | `npm run db:seed` | Insere os dados iniciais (pode rodar de novo, não duplica) |
 | `npm run db:studio` | Abre o Prisma Studio: tela no navegador para ver e editar o banco |
 | `npm run db:generate` | Gera o cliente TypeScript do Prisma (roda sozinho no `npm install`) |
-| `npm run test` | Testes automáticos (hoje: o relatório de produção conferido com um mês feito à mão). Não precisa de banco |
+| `npm run test` | Testes automáticos (vitest): relatório conferido com um mês feito à mão, datas, CSV, validações, limite de login. Não precisa de banco |
+| `npm run db:backup` | Backup do banco em `backups/` (guarda 30 dias) |
+| `npm run db:testar-backup` | Restaura o último backup num banco temporário e confere tabela por tabela |
+| `npm run db:deploy` | Produção: aplica as migrações pendentes, sem criar novas |
+| `npm run db:producao` | Produção: unidades, motivos e o primeiro Admin (sem dados fictícios) |
 
 **Rotas da API**
 
@@ -333,6 +341,7 @@ Abra <http://localhost:5173> e entre com um dos usuários de teste. O Dashboard 
 | `npm run build` | Confere os tipos e gera a versão de produção em `dist/` |
 | `npm run preview` | Serve a versão de produção localmente |
 | `npm run lint` | Verifica o código (oxlint) |
+| `npm run test` | Testes automáticos (vitest) das funções de `src/lib/` |
 
 O tema fica em `src/styles/`: as cores da marca estão em `_variables.scss` e o layout em `_layout.scss`.
 
@@ -348,7 +357,7 @@ As planilhas em `Documentos/` têm **nome, CPF e celular de clientes reais**. A 
 | 2. Regras e dados | Responder as [perguntas em aberto](docs/regras-de-negocio.md#7-perguntas-para-a-equipe) com a equipe |
 | 3. MVP | Importação, fila e registro de contatos |
 | 4. Piloto | Testar com as operadoras em paralelo à planilha |
-| 5. Implantação | Ajustes, treinamento e backup |
+| 5. Implantação | Ajustes, treinamento e backup. Guia técnico para a TI: [docs/implantacao.md](docs/implantacao.md) |
 | 6. Evolução | Conclusão automática, fila de retorno, mais unidades |
 
 ---
@@ -357,5 +366,6 @@ As planilhas em `Documentos/` têm **nome, CPF e celular de clientes reais**. A 
 - [CONTRIBUTING.md](CONTRIBUTING.md): como contribuir (padrões de código, commits, documentação e segurança dos dados)
 - [docs/arquitetura.md](docs/arquitetura.md): como o sistema está organizado (pastas, camadas, padrões)
 - [docs/regras-de-negocio.md](docs/regras-de-negocio.md): lógica extraída das planilhas
+- [docs/implantacao.md](docs/implantacao.md): como publicar, variáveis de produção, primeiro Admin e backups
 - [docs/apresentacao-proposta.pptx](docs/apresentacao-proposta.pptx): proposta apresentada à diretoria
 - Identidade visual: <https://www.maranhaomotos.com.br/>. Logo do sistema em [docs/marca/](docs/marca/); para refazer as versões usadas nas telas (logo e ícone da aba), rode `python scripts/gerar-marca.py` (precisa do Pillow)

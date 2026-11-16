@@ -34,3 +34,6 @@ Thumbs.db
 
 # Cliente do Prisma gerado automaticamente (npm run db:generate)
 apps/api/src/generated/
+
+# Backups do banco (têm dados pessoais de clientes): nunca versionar
+backups/

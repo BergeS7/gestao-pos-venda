@@ -171,10 +171,12 @@ Reproduzir o relatório mensal de produção que hoje é feito à mão:
 ---
 
 ## Etapa 11 — Qualidade e publicação
-- [ ] Testes da regra de cruzamento (`vitest`), a parte mais crítica
-- [ ] ESLint e Prettier nos dois apps
-- [ ] Rotina de backup do banco e teste de restauração
-- [ ] Hospedagem (validar com a TI): por exemplo Render ou Railway para a API e Vercel ou Netlify para o frontend
+- [x] Testes automáticos com `vitest` nos dois apps (44 testes: relatório, datas, CSV, validações, limite de login, permissões, senhas, formatos)
+- [ ] Testes da regra de cruzamento, a parte mais crítica. *Depende da Etapa 6 (importação), que ainda não existe; o `vitest` já está pronto para recebê-los.*
+- [x] Lint e Prettier nos dois apps. O lint usa **oxlint** em vez de ESLint: o plugin de TypeScript do ESLint ainda não funciona com o TypeScript 7 (compilador nativo) usado no projeto; o oxlint aplica as mesmas regras. Avisos bloqueiam o `npm run check`
+- [x] Rotina de backup do banco (`npm run db:backup`) e teste de restauração (`npm run db:testar-backup`), testados localmente
+- [x] Preparar a publicação: a API serve as telas em produção (um endereço só, exigência do cookie de login), cabeçalhos de segurança (`helmet`), script do primeiro Admin (`db:producao`) e o guia [docs/implantacao.md](docs/implantacao.md)
+- [ ] Hospedagem: escolher com a TI (servidor da empresa ou serviço gerenciado) e publicar seguindo o guia
 - [ ] Piloto com a oficina e coleta de feedback
 
 ---

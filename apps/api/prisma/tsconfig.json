@@ -1,0 +1,7 @@
+{
+  // Confere os tipos dos scripts do banco (seed, produção, dados-base).
+  // Usado pelo "npm run typecheck"; não gera arquivos.
+  "extends": "../tsconfig.json",
+  "compilerOptions": { "rootDir": "..", "noEmit": true },
+  "include": ["."]
+}

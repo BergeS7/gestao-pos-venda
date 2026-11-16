@@ -24,6 +24,8 @@
     "format": "prettier --write \"apps/*/src/**/*.{ts,tsx,scss}\" \"apps/*/*.{ts,json}\" \"apps/api/prisma/*.ts\"",
     "format:check": "prettier --check \"apps/*/src/**/*.{ts,tsx,scss}\" \"apps/*/*.{ts,json}\" \"apps/api/prisma/*.ts\"",
     "db:setup": "npm --prefix apps/api run db:setup",
+    "db:backup": "npm --prefix apps/api run db:backup",
+    "db:testar-backup": "npm --prefix apps/api run db:testar-backup",
     "db:migrate": "npm --prefix apps/api run db:migrate",
     "db:seed": "npm --prefix apps/api run db:seed",
     "db:studio": "npm --prefix apps/api run db:studio"

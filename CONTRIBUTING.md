@@ -139,7 +139,8 @@ Ao terminar uma alteração, atualize o que for afetado:
 
 ## 7. Checklist antes do commit
 
-- [ ] `npm run check` passou (tipos, lint e build)
+- [ ] `npm run check` passou (formato, lint, tipos, testes e build)
+- [ ] Regra nova ou corrigida tem teste (`arquivo.test.ts` ao lado do código)
 - [ ] Testei a alteração rodando o sistema (`npm run dev`)
 - [ ] Arquivos novos têm cabeçalho; funções exportadas têm JSDoc
 - [ ] Documentação atualizada (seção 5)

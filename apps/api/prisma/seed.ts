@@ -4,7 +4,7 @@
  * Executado por: npx prisma db seed   (ou: npm run db:seed)
  *
  * Insere:
- *  - Dados de apoio REAIS do negócio (não são pessoais):
+ *  - Dados de apoio REAIS do negócio (não são pessoais), de prisma/dados-base.ts:
  *      • as 3 unidades (STI, ZDC, BRT);
  *      • os 11 motivos de não agendamento usados na planilha.
  *  - Dados de exemplo FICTÍCIOS, para desenvolver e testar telas:
@@ -14,46 +14,17 @@
  *
  * ⚠️ Nunca coloque aqui dados reais de clientes (nome, CPF, telefone).
  *
+ * NÃO roda em produção (recusa com NODE_ENV=production). Lá se usa
+ * prisma/producao.ts, que só grava unidades, motivos e o primeiro Admin.
+ *
  * Idempotente: usa `upsert` (atualiza se já existe, cria se não existe),
  * então pode rodar várias vezes sem duplicar registros.
  */
 
 import { prisma } from "../src/db/prisma.js";
 import { gerarHash } from "../src/lib/senhas.js";
-import { AcaoMotivo, Perfil, SituacaoRevisao } from "../src/generated/prisma/client.js";
-
-// ---------------------------------------------------------------------------
-// Dados de apoio (reais, não pessoais)
-// ---------------------------------------------------------------------------
-
-/** Unidades da concessionária, conforme o relatório de produção. */
-const UNIDADES = [
-  { sigla: "STI", nome: "Santa Inês" },
-  { sigla: "ZDC", nome: "Zé Doca" },
-  { sigla: "BRT", nome: "Buriticupu" },
-];
-
-/**
- * Motivos de não agendamento (docs/regras-de-negocio.md, seção 4).
- * `acao` diz para onde a revisão vai quando a ligação termina com o motivo:
- *   RETORNAR       → volta para a fila com nova data de contato;
- *   BUSCAR_CONTATO → o telefone não funciona, procurar outro;
- *   ENCERRAR       → o cliente sai da fila nesta revisão.
- * Pendente de confirmação com a equipe: "Sem condição financeira" e "Em abstenção".
- */
-const MOTIVOS = [
-  { descricao: "Retornar depois", acao: AcaoMotivo.RETORNAR },
-  { descricao: "Km não atingida", acao: AcaoMotivo.RETORNAR },
-  { descricao: "Contato não funciona (buscar)", acao: AcaoMotivo.BUSCAR_CONTATO },
-  { descricao: "Mecânico de confiança", acao: AcaoMotivo.ENCERRAR },
-  { descricao: "Em abstenção", acao: AcaoMotivo.ENCERRAR },
-  { descricao: "Se desfez da moto", acao: AcaoMotivo.ENCERRAR },
-  { descricao: "Moto revenda (em nome de terceiros)", acao: AcaoMotivo.ENCERRAR },
-  { descricao: "Sem condição financeira", acao: AcaoMotivo.ENCERRAR },
-  { descricao: "Muito distante", acao: AcaoMotivo.ENCERRAR },
-  { descricao: "Realiza em outra autorizada", acao: AcaoMotivo.ENCERRAR },
-  { descricao: "Acha caro e serviço simples", acao: AcaoMotivo.ENCERRAR },
-];
+import { Perfil, SituacaoRevisao } from "../src/generated/prisma/client.js";
+import { gravarDadosBase } from "./dados-base.js";
 
 // ---------------------------------------------------------------------------
 // Dados de exemplo (fictícios)
@@ -61,8 +32,8 @@ const MOTIVOS = [
 
 /**
  * Senha dos usuários fictícios, SÓ para desenvolvimento e testes.
- * Pode ser trocada com SEED_SENHA no .env. Em produção o seed não define senhas:
- * o primeiro Admin real recebe a senha pelo script de implantação.
+ * Pode ser trocada com SEED_SENHA no .env. Em produção o seed não roda:
+ * o primeiro Admin real é criado por prisma/producao.ts (Etapa 11).
  */
 const SENHA_DEV = process.env.SEED_SENHA || "Exemplo2026";
 
@@ -117,30 +88,17 @@ function mesesAtras(meses: number): Date {
 }
 
 async function main() {
+  // Este seed cria clientes e usuários FICTÍCIOS: nunca pode rodar em produção.
+  // Para a produção existe o prisma/producao.ts (npm run db:producao).
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("O seed tem dados fictícios e não roda em produção. Use: npm run db:producao");
+  }
+
   console.log("Seed: unidades e motivos...");
-
-  // Unidades: guarda o id de cada sigla para usar nas relações abaixo
-  const unidadeId: Record<string, number> = {};
-  for (const u of UNIDADES) {
-    const unidade = await prisma.unidade.upsert({
-      where: { sigla: u.sigla },
-      update: { nome: u.nome },
-      create: u,
-    });
-    unidadeId[u.sigla] = unidade.id;
-  }
-
-  for (const m of MOTIVOS) {
-    await prisma.motivo.upsert({
-      where: { descricao: m.descricao },
-      update: { acao: m.acao },
-      create: m,
-    });
-  }
+  const unidadeId = await gravarDadosBase(prisma);
 
   console.log("Seed: usuários fictícios...");
-  const emProducao = process.env.NODE_ENV === "production";
-  const senhaHash = emProducao ? null : await gerarHash(SENHA_DEV);
+  const senhaHash = await gerarHash(SENHA_DEV);
   const operadoras: number[] = [];
   for (const u of USUARIOS) {
     const unidade = u.unidade ? unidadeId[u.unidade] : null;
