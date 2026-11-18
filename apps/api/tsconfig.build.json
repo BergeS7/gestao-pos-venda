@@ -1,6 +1,6 @@
 {
   // Build de produção: igual ao tsconfig.json, mas sem os arquivos de teste
-  // (o typecheck continua conferindo os testes).
+  // nem os ajudantes de teste em src/teste/ (o typecheck continua conferindo tudo).
   "extends": "./tsconfig.json",
-  "exclude": ["src/**/*.test.ts"]
+  "exclude": ["src/**/*.test.ts", "src/teste"]
 }

@@ -1,0 +1,77 @@
+# =============================================================================
+# .github/workflows/conferencia.yml — Conferência automática (CI)
+#
+# A cada envio (push) para a main e a cada pull request, o GitHub liga uma
+# máquina limpa e roda a MESMA conferência do `npm run check` local:
+# formatação, lint, tipos, testes (inclusive os de rotas, com um PostgreSQL
+# de verdade) e build das telas. Se algo falhar, o commit fica com um X
+# vermelho no GitHub e o e-mail de aviso diz qual passo quebrou.
+#
+# Só dados FICTÍCIOS: o banco de testes começa vazio e recebe o seed. Nenhum
+# segredo real é usado (a senha e a chave abaixo valem só nesta máquina
+# temporária, que é apagada no fim).
+# =============================================================================
+
+name: Conferência
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Se chegar um envio novo enquanto o anterior ainda roda, cancela o antigo
+concurrency:
+  group: conferencia-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: npm run check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    # Banco PostgreSQL só para os testes (mesma versão do desenvolvimento)
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: pos_venda
+          POSTGRES_PASSWORD: senha_so_do_ci
+          POSTGRES_DB: gestao_pos_venda_teste
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pos_venda"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # O Prisma exige DATABASE_URL até para gerar o cliente; aponta para o banco de testes
+      DATABASE_URL: postgresql://pos_venda:senha_so_do_ci@localhost:5432/gestao_pos_venda_teste?schema=public
+      DATABASE_URL_TESTE: postgresql://pos_venda:senha_so_do_ci@localhost:5432/gestao_pos_venda_teste?schema=public
+      JWT_SECRET: chave-usada-somente-no-ci-0123456789abcdefghijklmnop
+
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Instalar o Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            apps/api/package-lock.json
+            apps/web/package-lock.json
+
+      # npm ci na raiz; o "postinstall" instala apps/api e apps/web e gera o cliente do Prisma
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Conferência completa (formatação, lint, tipos, testes e build)
+        run: npm run check

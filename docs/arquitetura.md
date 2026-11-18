@@ -73,6 +73,7 @@ gestao-pos-venda/
 │   │   │   ├── middleware/
 │   │   │   │   └── auth.ts       exigirLogin (401) e exigirPerfil (403); req.usuario
 │   │   │   ├── routes/           CAMADA HTTP: lê a requisição e responde
+│   │   │   │   ├── rotas.test.ts Testes HTTP com banco de testes: login, perfis, carteira, 409
 │   │   │   │   ├── health.ts     GET /api/health
 │   │   │   │   ├── auth.ts       Login, logout, "quem sou eu", trocar senha
 │   │   │   │   ├── revisoes.ts   Fila: listar, exportar, atribuir, distribuir; tela do cliente
@@ -106,6 +107,10 @@ gestao-pos-venda/
 │   │   │   │   └── datas.ts      Datas "só dia" (agendada, próximo contato), sem erro de fuso
 │   │   │   ├── db/
 │   │   │   │   └── prisma.ts     Conexão única com o banco (PrismaClient)
+│   │   │   ├── teste/            Apoio aos testes de rotas (fora do build de produção)
+│   │   │   │   ├── ambiente.ts   Troca o banco pelo de testes antes de tudo
+│   │   │   │   ├── prepararBanco.ts Cria/limpa o banco *_teste, migrações + seed
+│   │   │   │   └── cliente.ts    Liga a API numa porta livre; req() e entrar()
 │   │   │   └── generated/prisma/ Cliente gerado pelo Prisma (NÃO vai pro Git)
 │   │   ├── prisma/
 │   │   │   ├── schema.prisma     Definição das tabelas
@@ -177,6 +182,7 @@ gestao-pos-venda/
 │   └── gerar-marca.py            Gera a logo das telas (da logo horizontal) e desenha o ícone da aba
 ├── Documentos/                   Planilhas REAIS (ignorada pelo Git, tem CPF/telefone)
 ├── backups/                      Backups do banco (ignorada pelo Git, tem dados pessoais)
+├── .github/workflows/conferencia.yml  CI: roda o npm run check no GitHub a cada envio
 ├── .prettierignore               O que o Prettier não formata
 ├── .vscode/                      Configuração do VS Code: terminal cmd, tarefas e extensões
 ├── package.json                  Scripts da raiz: "npm run dev" sobe API + web juntos (concurrently)
@@ -243,7 +249,7 @@ app.ts
 - **Seed idempotente:** usa `upsert`, então pode rodar várias vezes. Só tem dados fictícios.
 
 ### Decisões e boas práticas
-- **`app.ts` separado de `server.ts`:** permite testar o app sem abrir porta (testes de rota com `vitest` + `supertest` quando a importação chegar, Etapa 6).
+- **`app.ts` separado de `server.ts`:** os testes de rotas importam o `app` e o ligam numa porta livre (`src/teste/cliente.ts`, com o `fetch` do Node, sem bibliotecas extras).
 - **Configuração centralizada (`config.ts`):** no código da API, nenhum outro arquivo lê `process.env`. A exceção é o `prisma.config.ts`, que é do Prisma CLI. As variáveis ficam documentadas em `.env.example`, e as obrigatórias (`DATABASE_URL`) param a API na inicialização com uma mensagem clara.
 - **Conexão única com o banco (`db/prisma.ts`):** uma instância do PrismaClient para toda a API, evitando esgotar as conexões.
 - **A listagem devolve só o necessário:** `select` explícito, sem CPF, com paginação limitada a 100 itens.
@@ -292,7 +298,9 @@ Toda chamada seguinte: o navegador manda o cookie sozinho
 - **Lint com oxlint, não ESLint:** o projeto usa o TypeScript 7 (compilador nativo), e o `typescript-eslint` ainda depende da API em JavaScript do TypeScript, que essa versão não tem. O oxlint lê TypeScript sozinho, aplica as mesmas regras e entende os comentários `eslint-disable`. Configuração em `.oxlintrc.json` de cada app.
 - **Prettier com o estilo de cada app:** API com aspas duplas e `;`, frontend com aspas simples e sem `;` (`.prettierrc.json` em cada app; ignorados em `.prettierignore`). `endOfLine: auto` evita brigas entre Windows (CRLF) e o Git.
 - **`npm run check`** roda tudo antes do commit: formato, lint, tipos (inclusive `prisma/`), testes e build.
-- **Build sem testes:** `tsconfig.build.json` exclui `*.test.ts` do `dist/`.
+- **Build sem testes:** `tsconfig.build.json` exclui `*.test.ts` e `src/teste/` do `dist/`.
+- **Testes de rotas com banco de verdade:** `rotas.test.ts` usa o PostgreSQL de `DATABASE_URL_TESTE`. Um banco real pega o que um banco simulado esconderia (filtros do Prisma, transações, a proteção de versão). A trava de segurança exige o sufixo `_teste` no nome, porque o preparo apaga todas as tabelas. Os arquivos de teste rodam um por vez (`fileParallelism: false`).
+- **CI no GitHub Actions** (`.github/workflows/conferencia.yml`): `npm ci` e `npm run check` com um serviço `postgres:18`. As senhas do workflow só valem na máquina temporária do CI.
 
 ### Produção (Etapa 11)
 - **Um endereço só:** com `NODE_ENV=production`, a API também entrega o build do frontend (`config.servirFrontend`). O cookie de sessão é `SameSite=Strict`, então telas e API precisam estar no mesmo site. `/assets` tem cache de 1 ano (nomes com hash) e o `index.html` nunca fica em cache; qualquer rota de tela devolve o `index.html` para o React Router.

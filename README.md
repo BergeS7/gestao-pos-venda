@@ -300,10 +300,12 @@ Teste em <http://localhost:3333/api/health>. As outras rotas exigem login (a res
 | `npm run db:seed` | Insere os dados iniciais (pode rodar de novo, não duplica) |
 | `npm run db:studio` | Abre o Prisma Studio: tela no navegador para ver e editar o banco |
 | `npm run db:generate` | Gera o cliente TypeScript do Prisma (roda sozinho no `npm install`) |
-| `npm run test` | Testes automáticos (vitest): relatório conferido com um mês feito à mão, datas, CSV, validações, limite de login. Não precisa de banco |
+| `npm run test` | Testes automáticos (vitest): regras puras (relatório, datas, CSV, validações, limite de login) e **rotas da API** contra um banco de testes (ver abaixo) |
 | `npm run db:backup` | Backup do banco em `backups/` (guarda 30 dias) |
 | `npm run db:testar-backup` | Restaura o último backup num banco temporário e confere tabela por tabela |
 | `npm run db:deploy` | Produção: aplica as migrações pendentes, sem criar novas |
+
+**Testes de rotas.** `src/routes/rotas.test.ts` liga a API e faz requisições de verdade (login, permissões por perfil, carteira da operadora, registrar ligação, 409, CSV sem CPF). Eles usam um banco **separado**, indicado em `DATABASE_URL_TESTE` no `.env` (modelo em `.env.example`). O nome precisa terminar em `_teste`, porque cada rodada **apaga tudo** nesse banco, aplica as migrações e roda o seed. Se o banco não existir, os testes o criam. Sem a variável, esses testes são pulados e os demais rodam normalmente.
 | `npm run db:producao` | Produção: unidades, motivos e o primeiro Admin (sem dados fictícios) |
 
 **Rotas da API**
@@ -364,6 +366,9 @@ O tema fica em `src/styles/`: as cores da marca estão em `_variables.scss` e o 
 As planilhas em `Documentos/` têm **nome, CPF e celular de clientes reais**. A pasta está no `.gitignore` e **nunca** deve ir para o GitHub. Para desenvolver, use só os dados fictícios do seed (`apps/api/prisma/seed.ts`).
 
 ---
+
+### ✅ Conferência automática no GitHub (CI)
+A cada envio para a `main` e a cada pull request, o GitHub Actions roda o mesmo `npm run check` numa máquina limpa, com um PostgreSQL só para os testes ([.github/workflows/conferencia.yml](.github/workflows/conferencia.yml)). O resultado aparece como ✓ ou ✗ ao lado do commit no GitHub, e quem enviou recebe e-mail se falhar.
 
 ## 6. Plano de implantação
 | Etapa | Descrição |
