@@ -95,22 +95,22 @@ model Unidade {
 
 /// Pessoas que usam o sistema (operadoras, gestores...). Entram com e-mail e senha (Etapa 9).
 model Usuario {
-  id           Int      @id @default(autoincrement())
-  nome         String   @db.VarChar(120)
-  email        String   @unique @db.VarChar(160)
+  id           Int       @id @default(autoincrement())
+  nome         String    @db.VarChar(120)
+  email        String    @unique @db.VarChar(160)
   /// Hash da senha (bcrypt, nunca a senha em texto). Nulo = ainda sem senha, não consegue entrar.
-  senhaHash    String?  @map("senha_hash")
+  senhaHash    String?   @map("senha_hash")
   /// true quando a senha foi definida pelo Admin: no próximo login o sistema obriga a trocar.
-  trocarSenha  Boolean  @default(false) @map("trocar_senha")
-  perfil       Perfil   @default(OPERADORA)
-  unidadeId    Int?     @map("unidade_id")
+  trocarSenha  Boolean   @default(false) @map("trocar_senha")
+  perfil       Perfil    @default(OPERADORA)
+  unidadeId    Int?      @map("unidade_id")
   /// Usuário desativado não entra, mas continua no histórico (nunca é apagado).
-  ativo        Boolean  @default(true)
+  ativo        Boolean   @default(true)
   ultimoAcesso DateTime? @map("ultimo_acesso")
-  criadoEm     DateTime @default(now()) @map("criado_em")
-  atualizadoEm DateTime @updatedAt @map("atualizado_em")
+  criadoEm     DateTime  @default(now()) @map("criado_em")
+  atualizadoEm DateTime  @updatedAt @map("atualizado_em")
 
-  unidade     Unidade?      @relation(fields: [unidadeId], references: [id])
+  unidade     Unidade?           @relation(fields: [unidadeId], references: [id])
   importacoes Importacao[]
   /// Revisões atribuídas a este usuário (como operadora)
   revisoes    RevisaoAlvo[]
@@ -168,16 +168,19 @@ model Importacao {
 
 /// Cliente (pessoa física ou jurídica) que comprou a moto
 model Cliente {
-  id           Int      @id @default(autoincrement())
-  nome         String   @db.VarChar(160)
+  id            Int       @id @default(autoincrement())
+  nome          String    @db.VarChar(160)
   /// CPF/CNPJ só com números. Único quando informado.
-  cpfCnpj      String?  @unique @map("cpf_cnpj") @db.VarChar(14)
+  cpfCnpj       String?   @unique @map("cpf_cnpj") @db.VarChar(14)
   /// Celular só com números (DDD + número)
-  celular      String?  @db.VarChar(15)
+  celular       String?   @db.VarChar(15)
   /// Município sem o sufixo "/MA" (normalizado na importação)
-  municipio    String?  @db.VarChar(100)
-  criadoEm     DateTime @default(now()) @map("criado_em")
-  atualizadoEm DateTime @updatedAt @map("atualizado_em")
+  municipio     String?   @db.VarChar(100)
+  /// LGPD: quando os dados pessoais foram apagados (nome trocado, CPF e celular
+  /// removidos). Nulo = cliente normal. Ver docs/lgpd.md.
+  anonimizadoEm DateTime? @map("anonimizado_em")
+  criadoEm      DateTime  @default(now()) @map("criado_em")
+  atualizadoEm  DateTime  @updatedAt @map("atualizado_em")
 
   veiculos Veiculo[]
 
@@ -249,10 +252,10 @@ model RevisaoAlvo {
   criadoEm       DateTime        @default(now()) @map("criado_em")
   atualizadoEm   DateTime        @updatedAt @map("atualizado_em")
 
-  veiculo    Veiculo     @relation(fields: [veiculoId], references: [id])
-  unidade    Unidade?    @relation(fields: [unidadeId], references: [id])
-  operador   Usuario?    @relation(fields: [operadorId], references: [id])
-  importacao Importacao? @relation(fields: [importacaoId], references: [id])
+  veiculo    Veiculo            @relation(fields: [veiculoId], references: [id])
+  unidade    Unidade?           @relation(fields: [unidadeId], references: [id])
+  operador   Usuario?           @relation(fields: [operadorId], references: [id])
+  importacao Importacao?        @relation(fields: [importacaoId], references: [id])
   /// Histórico de ligações desta revisão (Etapa 8)
   tentativas TentativaContato[]
 

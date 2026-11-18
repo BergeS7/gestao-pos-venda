@@ -27,6 +27,7 @@ import RevisaoDetalhe from './pages/RevisaoDetalhe.tsx'
 import AgendaDoDia from './pages/Agenda.tsx'
 import Importacoes from './pages/Importacoes.tsx'
 import Usuarios from './pages/Usuarios.tsx'
+import Privacidade from './pages/Privacidade.tsx'
 import Login from './pages/Login.tsx'
 import TrocarSenha from './pages/TrocarSenha.tsx'
 import NaoEncontrada from './pages/NaoEncontrada.tsx'
@@ -92,6 +93,14 @@ export default function App() {
           element={
             <ExigirPermissao permissao="usuarios">
               <Usuarios />
+            </ExigirPermissao>
+          }
+        />
+        <Route
+          path="privacidade"
+          element={
+            <ExigirPermissao permissao="privacidade">
+              <Privacidade />
             </ExigirPermissao>
           }
         />

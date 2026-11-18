@@ -33,3 +33,17 @@ export function celularBR(celular: string | null | undefined): string {
   if (d.length === 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
   return celular;
 }
+
+/**
+ * CPF/CNPJ com a maior parte escondida (LGPD): o suficiente para conferir com
+ * o cliente, sem expor o número inteiro na tela.
+ *   "12345678901"    → "***.456.789-**"
+ *   "12345678000199" → "**.***.678/0001-**"
+ * Vazio se não houver documento.
+ */
+export function documentoMascarado(doc: string | null | undefined): string {
+  if (!doc) return "";
+  if (doc.length === 11) return `***.${doc.slice(3, 6)}.${doc.slice(6, 9)}-**`;
+  if (doc.length === 14) return `**.***.${doc.slice(5, 8)}/${doc.slice(8, 12)}-**`;
+  return "***";
+}

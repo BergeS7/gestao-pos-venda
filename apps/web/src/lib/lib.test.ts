@@ -35,6 +35,7 @@ describe('permissões por perfil', () => {
     gerirFila: ['GESTOR', 'ADMIN'],
     importar: ['GESTOR', 'ADMIN'],
     usuarios: ['ADMIN'],
+    privacidade: ['ADMIN'],
     verTodasCarteiras: ['GESTOR', 'DIRETORIA', 'ADMIN'],
   }
   const perfis: Perfil[] = ['OPERADORA', 'GESTOR', 'DIRETORIA', 'ADMIN']

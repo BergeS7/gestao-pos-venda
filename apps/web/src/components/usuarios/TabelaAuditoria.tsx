@@ -24,6 +24,14 @@ const ROTULO_ACAO: Record<string, { texto: string; icone: string }> = {
   USUARIO_CRIADO: { texto: 'Criou usuário', icone: 'bi-person-plus' },
   USUARIO_ALTERADO: { texto: 'Alterou usuário', icone: 'bi-pencil' },
   SENHA_REDEFINIDA: { texto: 'Redefiniu senha', icone: 'bi-key-fill text-warning' },
+  // LGPD (docs/lgpd.md)
+  CLIENTE_VISUALIZADO: { texto: 'Abriu dados do cliente', icone: 'bi-eye' },
+  FILA_EXPORTADA: { texto: 'Exportou a fila (CSV)', icone: 'bi-download' },
+  DADOS_TITULAR_CONSULTADOS: { texto: 'Consultou dados do titular', icone: 'bi-shield-lock' },
+  CLIENTE_ANONIMIZADO: { texto: 'Anonimizou cliente', icone: 'bi-eraser text-danger' },
+  // Importação (Etapa 6)
+  IMPORTACAO_CONFIRMADA: { texto: 'Confirmou importação', icone: 'bi-upload text-success' },
+  IMPORTACAO_CANCELADA: { texto: 'Cancelou importação', icone: 'bi-x-circle' },
 }
 
 /** Resume os detalhes em uma linha (ex.: "ativo: true → false"). */

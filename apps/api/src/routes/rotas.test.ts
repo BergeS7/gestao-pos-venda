@@ -9,7 +9,8 @@
  *  - permissões: quem não está logado recebe 401; perfil sem permissão, 403;
  *  - carteira: a operadora só vê e só mexe nas revisões dela;
  *  - atendimento: registrar ligação, validações e proteção contra sobrescrita (409);
- *  - exportação CSV sem CPF.
+ *  - exportação CSV sem CPF;
+ *  - LGPD: acessos auditados, busca do titular, anonimização e prazo de guarda.
  *
  * Precisam de DATABASE_URL_TESTE (nome do banco terminando em "_teste"); sem
  * ela são pulados. Como preparar: README, seção "Testes", e src/teste/prepararBanco.ts.
@@ -20,7 +21,13 @@ import { hoje, somarDias } from "../lib/datas.js";
 import { entrar, iniciarApi, pararApi, req, USUARIOS_TESTE as U } from "../teste/cliente.js";
 
 /** Formato de cada item da fila, só com o que os testes usam. */
-type ItemFila = { id: number; situacao: string; versao: number; operador: { id: number } | null };
+type ItemFila = {
+  id: number;
+  situacao: string;
+  versao: number;
+  operador: { id: number } | null;
+  veiculo: { cliente: { id: number } };
+};
 
 describe.skipIf(!process.env.DATABASE_URL_TESTE)("rotas da API (banco de testes)", () => {
   /** Cookies de sessão de cada perfil, obtidos uma vez. */
@@ -214,6 +221,102 @@ describe.skipIf(!process.env.DATABASE_URL_TESTE)("rotas da API (banco de testes)
       const cabecalho = r.corpo.split(/\r?\n/)[0];
       expect(cabecalho).toContain("Chassi");
       expect(cabecalho).not.toMatch(/CPF/i);
+    });
+  });
+  describe("LGPD", () => {
+    /** Ações registradas na auditoria até agora (página grande o bastante para o banco de testes). */
+    async function acoesAuditadas(): Promise<string[]> {
+      const r = await req<{ itens: { acao: string }[] }>("GET", "/api/auditoria?porPagina=100", {
+        cookie: sessao.admin,
+      });
+      return r.corpo.itens.map((i) => i.acao);
+    }
+
+    it("abrir a tela do cliente e exportar a fila ficam na auditoria", async () => {
+      const acoes = await acoesAuditadas();
+      expect(acoes).toContain("CLIENTE_VISUALIZADO");
+      expect(acoes).toContain("FILA_EXPORTADA");
+    });
+
+    it("só o Admin acessa a Privacidade", async () => {
+      for (const quem of ["operadoraA", "gestor", "diretoria"] as const) {
+        const r = await req("GET", "/api/privacidade/titulares?busca=CLIENTE", { cookie: sessao[quem] });
+        expect(r.status).toBe(403);
+      }
+    });
+
+    it("busca por CPF devolve o documento mascarado", async () => {
+      const r = await req("GET", "/api/privacidade/titulares?busca=000.000.000-01", { cookie: sessao.admin });
+      expect(r.status).toBe(200);
+      expect(r.corpo).toHaveLength(1);
+      expect(r.corpo[0].documento).toBe("***.000.000-**");
+      expect(r.corpo[0]).not.toHaveProperty("cpfCnpj");
+    });
+
+    it("anonimiza: pede confirmação, apaga dados pessoais e tira da fila", async () => {
+      // Cliente da revisão que recebeu a ligação com observação (bloco "registrar ligação")
+      const fila = await req<{ itens: ItemFila[] }>("GET", "/api/revisoes?situacao=RETORNAR&porPagina=100", {
+        cookie: sessao.operadoraA,
+      });
+      const clienteId = fila.corpo.itens[0].veiculo.cliente.id;
+
+      const sem = await req("POST", `/api/privacidade/titulares/${clienteId}/anonimizar`, {
+        cookie: sessao.admin,
+        corpo: {},
+      });
+      expect(sem.status).toBe(400);
+
+      const ok = await req("POST", `/api/privacidade/titulares/${clienteId}/anonimizar`, {
+        cookie: sessao.admin,
+        corpo: { confirmacao: "ANONIMIZAR" },
+      });
+      expect(ok.status).toBe(200);
+      expect(ok.corpo.revisoesEncerradas).toBeGreaterThanOrEqual(1);
+
+      const dados = await req("GET", `/api/privacidade/titulares/${clienteId}`, { cookie: sessao.admin });
+      expect(dados.corpo.nome).toBe(`CLIENTE ANONIMIZADO ${clienteId}`);
+      expect(dados.corpo.cpfCnpj).toBeNull();
+      expect(dados.corpo.celular).toBeNull();
+      const revisoes = dados.corpo.veiculos.flatMap((v: { revisoes: unknown[] }) => v.revisoes);
+      for (const r of revisoes) {
+        expect(["PENDENTE", "RETORNAR", "AGENDADO", "BUSCAR_CONTATO"]).not.toContain(r.situacao);
+        for (const t of r.tentativas) expect(t.observacoes).toBeNull();
+      }
+
+      const deNovo = await req("POST", `/api/privacidade/titulares/${clienteId}/anonimizar`, {
+        cookie: sessao.admin,
+        corpo: { confirmacao: "ANONIMIZAR" },
+      });
+      expect(deNovo.status).toBe(409);
+      expect(await acoesAuditadas()).toEqual(
+        expect.arrayContaining(["DADOS_TITULAR_CONSULTADOS", "CLIENTE_ANONIMIZADO"]),
+      );
+    });
+
+    it("prazo de guarda: só entra quem não tem revisão aberta e está parado há mais tempo", async () => {
+      const { prisma } = await import("../db/prisma.js");
+      const { clientesForaDoPrazo } = await import("../services/privacidade.js");
+      // Um cliente com revisão encerrada, "parado" há 3 anos
+      const parado = await prisma.revisaoAlvo.findFirstOrThrow({
+        where: { situacao: "NAO_AGENDADO", veiculo: { cliente: { anonimizadoEm: null } } },
+        select: { veiculo: { select: { clienteId: true } } },
+      });
+      const clienteId = parado.veiculo.clienteId;
+      const antigo = new Date(Date.now() - 3 * 365 * 24 * 3600 * 1000);
+      await prisma.$executeRaw`UPDATE clientes SET atualizado_em = ${antigo} WHERE id = ${clienteId}`;
+      await prisma.$executeRaw`UPDATE revisoes_alvo SET atualizado_em = ${antigo}
+        WHERE veiculo_id IN (SELECT id FROM veiculos WHERE cliente_id = ${clienteId})`;
+      await prisma.$executeRaw`UPDATE tentativas_contato SET criado_em = ${antigo}
+        WHERE revisao_id IN (SELECT r.id FROM revisoes_alvo r JOIN veiculos v ON v.id = r.veiculo_id WHERE v.cliente_id = ${clienteId})`;
+
+      expect((await clientesForaDoPrazo(24)).map((c) => c.id)).toContain(clienteId);
+      expect((await clientesForaDoPrazo(48)).map((c) => c.id)).not.toContain(clienteId);
+      // Clientes com revisão aberta nunca entram, mesmo com prazo curto
+      const comAberta = await prisma.revisaoAlvo.findFirstOrThrow({
+        where: { situacao: "PENDENTE" },
+        select: { veiculo: { select: { clienteId: true } } },
+      });
+      expect((await clientesForaDoPrazo(12)).map((c) => c.id)).not.toContain(comAberta.veiculo.clienteId);
     });
   });
 });

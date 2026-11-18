@@ -29,6 +29,7 @@ import { relatoriosRouter } from "./routes/relatorios.js";
 import { catalogosRouter } from "./routes/catalogos.js";
 import { authRouter } from "./routes/auth.js";
 import { auditoriaRouter, usuariosRouter } from "./routes/usuarios.js";
+import { privacidadeRouter } from "./routes/privacidade.js";
 import { exigirLogin, exigirPerfil } from "./middleware/auth.js";
 import { Perfil } from "./generated/prisma/client.js";
 
@@ -92,6 +93,7 @@ app.use("/api/revisoes", exigirLogin, revisoesRouter);
 app.use("/api/relatorios", exigirLogin, relatoriosRouter); // Dashboard e Excel (Etapa 10)
 app.use("/api/usuarios", exigirLogin, exigirPerfil(Perfil.ADMIN), usuariosRouter);
 app.use("/api/auditoria", exigirLogin, exigirPerfil(Perfil.ADMIN), auditoriaRouter);
+app.use("/api/privacidade", exigirLogin, exigirPerfil(Perfil.ADMIN), privacidadeRouter); // LGPD (docs/lgpd.md)
 app.use("/api", exigirLogin, catalogosRouter); // /api/unidades, /api/operadoras, /api/motivos
 // (Express 5 já encaminha erros de rotas async para o tratador de erros abaixo)
 

@@ -29,4 +29,5 @@ export const menu: MenuItem[] = [
   { to: '/agenda', label: 'Agenda do dia', icon: 'bi-calendar2-check' },
   { to: '/importacoes', label: 'Importações', icon: 'bi-upload', permissao: 'importar' },
   { to: '/usuarios', label: 'Usuários', icon: 'bi-person-gear', permissao: 'usuarios' },
+  { to: '/privacidade', label: 'Privacidade (LGPD)', icon: 'bi-shield-lock', permissao: 'privacidade' },
 ]

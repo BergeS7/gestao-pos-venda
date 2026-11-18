@@ -18,7 +18,7 @@
 import type { Perfil, UsuarioLogado } from './api.ts'
 
 /** Ações controladas por perfil. */
-export type Permissao = 'atender' | 'gerirFila' | 'importar' | 'usuarios' | 'verTodasCarteiras'
+export type Permissao = 'atender' | 'gerirFila' | 'importar' | 'usuarios' | 'privacidade' | 'verTodasCarteiras'
 
 /** Perfis que podem cada ação. */
 const PERFIS_POR_PERMISSAO: Record<Permissao, Perfil[]> = {
@@ -26,6 +26,8 @@ const PERFIS_POR_PERMISSAO: Record<Permissao, Perfil[]> = {
   gerirFila: ['GESTOR', 'ADMIN'],
   importar: ['GESTOR', 'ADMIN'],
   usuarios: ['ADMIN'],
+  /** Tela de Privacidade (LGPD): ver tudo de um cliente e anonimizar. */
+  privacidade: ['ADMIN'],
   verTodasCarteiras: ['GESTOR', 'DIRETORIA', 'ADMIN'],
 }
 

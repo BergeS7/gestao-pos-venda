@@ -345,3 +345,58 @@ export type Agenda = {
   proximosDias: number
   limitePorSecao: number
 }
+
+// ---------------------------------------------------------------------------
+// Privacidade / LGPD (apps/api/src/services/privacidade.ts)
+// ---------------------------------------------------------------------------
+
+/** Um cliente na busca da tela de Privacidade (documento já mascarado). */
+export type TitularResumo = {
+  id: number
+  nome: string
+  documento: string
+  municipio: string | null
+  anonimizadoEm: string | null
+  veiculos: number
+}
+
+/** Tudo o que o sistema guarda sobre um cliente (GET /privacidade/titulares/:id). */
+export type DadosTitular = {
+  id: number
+  nome: string
+  cpfCnpj: string | null
+  celular: string | null
+  municipio: string | null
+  anonimizadoEm: string | null
+  criadoEm: string
+  atualizadoEm: string
+  veiculos: {
+    chassi: string
+    modelo: string
+    cor: string | null
+    dataVenda: string | null
+    revisoes: {
+      id: number
+      km: number
+      situacao: SituacaoRevisao
+      dataAgendada: string | null
+      proximoContato: string | null
+      concluida: boolean
+      unidade: { sigla: string } | null
+      operador: { nome: string } | null
+      tentativas: {
+        criadoEm: string
+        conseguiuFalar: boolean
+        resultado: ResultadoContato
+        dataAgendada: string | null
+        proximoContato: string | null
+        observacoes: string | null
+        motivo: { descricao: string } | null
+        usuario: { nome: string } | null
+      }[]
+    }[]
+  }[]
+}
+
+/** Resposta da anonimização. */
+export type ResultadoAnonimizacao = { clienteId: number; revisoesEncerradas: number; observacoesApagadas: number }

@@ -92,6 +92,7 @@ gestao-pos-venda/
 │   │   │   │   ├── auditoria.ts  Grava e lista "quem alterou o quê e quando"
 │   │   │   │   ├── revisoes.ts   Filtros, paginação, atribuição e distribuição
 │   │   │   │   ├── agenda.ts     Agenda do dia: o que fazer hoje, em seções
+│   │   │   │   ├── privacidade.ts LGPD: busca do titular, dados guardados, anonimizar, prazo de guarda
 │   │   │   │   ├── relatorios.ts Relatório mensal: regra do mês e contagens (cálculo puro)
 │   │   │   │   ├── relatorios.test.ts Confere o relatório com um mês fictício feito à mão
 │   │   │   │   ├── relatoriosExcel.ts Monta o .xlsx de 4 abas (exceljs)
@@ -118,6 +119,7 @@ gestao-pos-venda/
 │   │   │   ├── dados-base.ts     Unidades e motivos (reais, não pessoais), usados pelo seed e pela produção
 │   │   │   ├── seed.ts           Desenvolvimento: dados base + exemplos fictícios (recusa rodar em produção)
 │   │   │   ├── producao.ts       Produção: dados base + primeiro Admin (Etapa 11)
+│   │   │   ├── retencao.ts       LGPD: anonimiza clientes fora do prazo de guarda (npm run db:retencao)
 │   │   │   └── tsconfig.json     Confere os tipos destes scripts no typecheck
 │   │   ├── scripts/
 │   │   │   ├── setup-db-local.ps1  Cria usuário e banco local e grava o .env
@@ -173,6 +175,7 @@ gestao-pos-venda/
 ├── docs/                         Documentação
 │   ├── arquitetura.md            (este arquivo)
 │   ├── implantacao.md            Como publicar, produção e backups (Etapa 11)
+│   ├── lgpd.md                   Dados pessoais, pedidos dos clientes, prazo de guarda
 │   ├── regras-de-negocio.md      Lógica extraída das planilhas reais
 │   ├── paleta-de-cores.txt
 │   ├── marca/                    Marca RevisOn: revison-horizontal.png/.svg (fonte das telas),
@@ -292,6 +295,12 @@ Toda chamada seguinte: o navegador manda o cookie sozinho
 - **Mês no horário do Maranhão:** `intervaloDoMes("2026-10")` vai de 01/10 03:00 UTC a 01/11 03:00 UTC (UTC−3, sem horário de verão).
 - **Excel no servidor** (`services/relatoriosExcel.ts` → `exceljs`): as taxas vão como número com formato `0.0%`, para quem abrir poder ordenar e somar. Só contagens, nenhum dado de cliente.
 - **Operadora só vê os próprios números:** como na fila, a rota troca o filtro `operador` pelo id dela.
+
+### Privacidade (LGPD)
+- **Anonimizar em vez de excluir:** `anonimizarCliente()` troca o nome, apaga CPF, celular e observações e tira as revisões da fila, numa transação. As ligações ficam (sem observação) para não mudar relatórios de meses passados. Marca: `clientes.anonimizado_em`.
+- **Acesso auditado:** a rota `GET /revisoes/:id` registra `CLIENTE_VISUALIZADO` depois de confirmar o acesso; a exportação registra `FILA_EXPORTADA` com os filtros e o total de linhas.
+- **CPF só onde é preciso:** nenhuma rota do dia a dia devolve CPF. A busca da Privacidade devolve mascarado (`documentoMascarado()` em `lib/formatar.ts`); o completo só em `GET /privacidade/titulares/:id`, só Admin e auditado.
+- **Prazo de guarda em SQL:** `clientesForaDoPrazo()` usa `GREATEST` entre as datas do cliente, das revisões e das ligações; o script `prisma/retencao.ts` só altera com `--aplicar`.
 
 ### Qualidade (Etapa 11)
 - **Testes ao lado do código:** `arquivo.test.ts` na mesma pasta do `arquivo.ts`, rodados pelo `vitest` (`npm run test`). Testam regras puras, sem banco: relatório, datas, CSV anti-fórmula, validações (`schemas/`), limite de login; na web, permissões, senhas, formatos e o destino depois do login.

@@ -130,7 +130,7 @@ Opções: `-Destino D:\backups -ManterDias 90` no backup; `-Arquivo caminho.dump
 2. **Teste de restauração mensal** com `db:testar-backup`, anotando a data e o resultado.
 3. **Cópia fora do servidor** (outro disco, outro prédio ou nuvem da empresa), para não perder tudo junto com o servidor.
 
-**Cuidados (LGPD):**
+**Cuidados (LGPD, ver também [lgpd.md](lgpd.md)):**
 - O backup tem dados pessoais dos clientes (nome, CPF, celular). Guarde-o em pasta com acesso restrito.
 - A pasta `backups/` está no `.gitignore` e nunca vai para o GitHub.
 - No computador de desenvolvimento, a pasta do projeto fica no OneDrive: use só dados fictícios ali.
@@ -151,4 +151,5 @@ Para **restaurar de verdade** (desastre), com o sistema parado:
 - [ ] Backup diário agendado, com cópia fora do servidor
 - [ ] Primeiro teste de restauração feito (`RESTAURACAO OK`)
 - [ ] Equipe cadastrada na tela Usuários
+- [ ] Prazo de guarda decidido e `npm run db:retencao` agendado ([lgpd.md](lgpd.md), seção 5)
 - [ ] Piloto com a oficina combinado (ROTEIRO, Etapa 11)

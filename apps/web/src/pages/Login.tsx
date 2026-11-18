@@ -114,7 +114,12 @@ export default function Login() {
             Entrar
           </button>
 
-          <p className="small text-secondary mt-3 mb-0">Esqueceu a senha? Peça ao administrador para redefinir.</p>
+          <p className="small text-secondary mt-3 mb-2">Esqueceu a senha? Peça ao administrador para redefinir.</p>
+          {/* Aviso de LGPD: quem entra sabe que os acessos a dados de clientes são registrados */}
+          <p className="small text-secondary mb-0">
+            <i className="bi bi-shield-lock me-1" aria-hidden="true" />
+            Acesso restrito à equipe. Os dados dos clientes são protegidos pela LGPD e os acessos ficam registrados.
+          </p>
         </div>
       </form>
     </main>

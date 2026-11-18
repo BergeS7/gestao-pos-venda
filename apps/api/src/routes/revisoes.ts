@@ -44,6 +44,7 @@ import {
   listarRevisoesSchema,
 } from "../schemas/revisoes.js";
 import { agendaDoDia } from "../services/agenda.js";
+import { ACOES, auditar } from "../services/auditoria.js";
 import { atribuirOperadora, distribuirRevisoes, listarParaExportar, listarRevisoes } from "../services/revisoes.js";
 
 export const revisoesRouter = Router();
@@ -99,10 +100,18 @@ const colunasExportacao: ColunaCsv<LinhaExportacao>[] = [
  * Aceita os mesmos filtros da listagem (a paginação é ignorada) e devolve um
  * arquivo CSV para download: fila-revisoes-AAAA-MM-DD.csv
  * Resposta 413 se passar do limite de linhas (ver MAX_EXPORTACAO).
+ * LGPD: cada exportação fica na auditoria (FILA_EXPORTADA), com filtros e total de linhas.
  */
 revisoesRouter.get("/exportar", async (req, res) => {
   const filtros = filtrarCarteira(req, validar(filtrosRevisoesSchema, req.query));
   const linhas = await listarParaExportar(filtros);
+  // LGPD: o arquivo leva nome e celular dos clientes; fica registrado quem baixou e com quais filtros
+  await auditar({
+    usuarioId: usuarioLogado(req).id,
+    acao: ACOES.FILA_EXPORTADA,
+    entidade: "revisoes_alvo",
+    detalhes: { linhas: linhas.length, filtros: JSON.parse(JSON.stringify(filtros)) },
+  });
 
   const hoje = new Date().toISOString().slice(0, 10);
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
@@ -155,10 +164,15 @@ revisoesRouter.post("/distribuir", exigirPerfil(...PERFIS_GESTAO), async (req, r
  * GET /api/revisoes/:id
  * Resposta 200: a revisão (mesmos campos da fila) + `tentativas` (mais nova primeiro).
  * Resposta 404 se não existir.
+ * LGPD: cada abertura fica na auditoria (CLIENTE_VISUALIZADO).
  */
 revisoesRouter.get("/:id", async (req, res) => {
   const id = validar(idRevisaoSchema, req.params.id);
-  res.json(await detalharRevisao(id, usuarioLogado(req)));
+  const usuario = usuarioLogado(req);
+  const revisao = await detalharRevisao(id, usuario);
+  // LGPD: registra quem abriu os dados do cliente (só depois de confirmar o acesso)
+  await auditar({ usuarioId: usuario.id, acao: ACOES.CLIENTE_VISUALIZADO, entidade: "revisoes_alvo", entidadeId: id });
+  res.json(revisao);
 });
 
 /**

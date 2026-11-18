@@ -304,6 +304,7 @@ Teste em <http://localhost:3333/api/health>. As outras rotas exigem login (a res
 | `npm run db:backup` | Backup do banco em `backups/` (guarda 30 dias) |
 | `npm run db:testar-backup` | Restaura o último backup num banco temporário e confere tabela por tabela |
 | `npm run db:deploy` | Produção: aplica as migrações pendentes, sem criar novas |
+| `npm run db:retencao` | LGPD: lista (ou, com `-- --aplicar`, anonimiza) clientes fora do prazo de guarda. Ver [docs/lgpd.md](docs/lgpd.md) |
 
 **Testes de rotas.** `src/routes/rotas.test.ts` liga a API e faz requisições de verdade (login, permissões por perfil, carteira da operadora, registrar ligação, 409, CSV sem CPF). Eles usam um banco **separado**, indicado em `DATABASE_URL_TESTE` no `.env` (modelo em `.env.example`). O nome precisa terminar em `_teste`, porque cada rodada **apaga tudo** nesse banco, aplica as migrações e roda o seed. Se o banco não existir, os testes o criam. Sem a variável, esses testes são pulados e os demais rodam normalmente.
 | `npm run db:producao` | Produção: unidades, motivos e o primeiro Admin (sem dados fictícios) |
@@ -367,6 +368,15 @@ As planilhas em `Documentos/` têm **nome, CPF e celular de clientes reais**. A 
 
 ---
 
+### ✅ Privacidade (LGPD)
+Acessos a dados de clientes ficam na auditoria (quem abriu a tela do cliente, quem exportou a fila). A tela **Privacidade (LGPD)**, só do Admin, atende os pedidos dos clientes: ver tudo o que está guardado (e baixar) ou **anonimizar**. O `npm run db:retencao` aplica o prazo de guarda. Detalhes, procedimentos e decisões pendentes da empresa em [docs/lgpd.md](docs/lgpd.md).
+
+| Rota (só Admin) | O que faz |
+|---|---|
+| `GET /api/privacidade/titulares?busca=` | Clientes por CPF/CNPJ (exato) ou parte do nome; documento mascarado |
+| `GET /api/privacidade/titulares/:id` | Tudo o que o sistema guarda sobre o cliente (registrado na auditoria) |
+| `POST /api/privacidade/titulares/:id/anonimizar` | Apaga nome, CPF, celular e observações; tira da fila. Corpo `{ "confirmacao": "ANONIMIZAR" }` |
+
 ### ✅ Conferência automática no GitHub (CI)
 A cada envio para a `main` e a cada pull request, o GitHub Actions roda o mesmo `npm run check` numa máquina limpa, com um PostgreSQL só para os testes ([.github/workflows/conferencia.yml](.github/workflows/conferencia.yml)). O resultado aparece como ✓ ou ✗ ao lado do commit no GitHub, e quem enviou recebe e-mail se falhar.
 
@@ -387,5 +397,6 @@ A cada envio para a `main` e a cada pull request, o GitHub Actions roda o mesmo 
 - [docs/arquitetura.md](docs/arquitetura.md): como o sistema está organizado (pastas, camadas, padrões)
 - [docs/regras-de-negocio.md](docs/regras-de-negocio.md): lógica extraída das planilhas
 - [docs/implantacao.md](docs/implantacao.md): como publicar, variáveis de produção, primeiro Admin e backups
+- [docs/lgpd.md](docs/lgpd.md): dados pessoais, pedidos dos clientes, prazo de guarda e decisões pendentes
 - [docs/apresentacao-proposta.pptx](docs/apresentacao-proposta.pptx): proposta apresentada à diretoria
 - Identidade visual: <https://www.maranhaomotos.com.br/>. Marca do sistema (**RevisOn**: o "O" é um botão de ligar) em [docs/marca/](docs/marca/): logo horizontal em PNG e SVG, versão para fundo escuro e selo redondo. Para refazer as versões usadas nas telas (logo e ícone da aba), rode `python scripts/gerar-marca.py` (precisa do Pillow)
