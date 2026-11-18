@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="logo" xmlns="http://www.w3.org/2000/svg" viewBox="220 192 1161 436" width="1161" height="436">
+  <!-- RevisOn — versão horizontal: nome com o "O" em forma de botão de ligar, linha de velocidade e slogan. Fonte: Arial Black. -->
+  
+  <g id="filetes" fill="none" stroke="#dd2026" stroke-linecap="round"><path d="M300.2642593383789 563 L449.796875 563" stroke-width="4.0"></path><path d="M1158.203125 563 L1319.735740661621 563" stroke-width="4.0"></path></g>
+  <g id="nome" transform="translate(0 470) skewX(-12)">
+    <text id="revis" class="cor-revis" x="270.3" y="0" font-family="'Arial Black', Arial, sans-serif" font-size="220" fill="#141414">Revis</text>
+    <g id="botao" fill="none" stroke="#dd2026" stroke-linecap="round">
+      <path id="anel" d="M985.5763895832175 -158.60956640527746 A75.44 75.44 0 1 0 1056.4102589763527 -158.60956640527746" stroke-width="33.1"></path>
+      <path id="barra" d="M1020.9933242797852 -190 L1020.9933242797852 -98" stroke-width="28.2"></path>
+    </g>
+    <text id="letraN" x="1123.0" y="0" font-family="'Arial Black', Arial, sans-serif" font-size="220" fill="#dd2026">n</text>
+  </g>
+  <g id="linhas" fill="#dd2026"><path d="M280.2642593383789 507 L1209.735740661621 497 L1205.735740661621 517 Z"></path><path d="M1232.735740661621 497 L1248.735740661621 497 L1239.735740661621 517 L1223.735740661621 517 Z"></path><path d="M1264.735740661621 497 L1280.735740661621 497 L1271.735740661621 517 L1255.735740661621 517 Z"></path><path d="M1296.735740661621 497 L1312.735740661621 497 L1303.735740661621 517 L1287.735740661621 517 Z"></path><path d="M1328.735740661621 497 L1344.735740661621 497 L1335.735740661621 517 L1319.735740661621 517 Z"></path></g>
+  <text id="slogan" class="cor-slogan" x="810.0" y="578.0" text-anchor="middle" font-family="'Arial Black', Arial, sans-serif" font-size="46" letter-spacing="9" fill="#2a2a2a">GESTÃO PÓS-VENDA</text>
+</svg>

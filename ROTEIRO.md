@@ -179,6 +179,7 @@ Reproduzir o relatório mensal de produção que hoje é feito à mão:
 - [x] Preparar a publicação: a API serve as telas em produção (um endereço só, exigência do cookie de login), cabeçalhos de segurança (`helmet`), script do primeiro Admin (`db:producao`) e o guia [docs/implantacao.md](docs/implantacao.md)
 - [ ] Hospedagem: escolher com a TI (servidor da empresa ou serviço gerenciado) e publicar seguindo o guia
 - [ ] Piloto com a oficina e coleta de feedback
+- [x] Marca **RevisOn** aplicada: logo no menu e no login, ícone da aba (botão de ligar) e título da página
 
 ---
 

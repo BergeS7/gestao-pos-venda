@@ -1,6 +1,8 @@
-# Gestão do Pós-Venda — Maranhão Motos
+# RevisOn — Gestão do Pós-Venda · Maranhão Motos
 
-Sistema web para organizar o **pós-venda de revisões da oficina** da Maranhão Motos. Ele substitui as planilhas compartilhadas e o cruzamento manual de relatórios do Cloud por uma base central, com fila de ligações, histórico de contatos e indicadores de produção da equipe.
+<img src="docs/marca/revison-horizontal.png" alt="RevisOn — Gestão Pós-Venda" width="360">
+
+O **RevisOn** é o sistema web para organizar o **pós-venda de revisões da oficina** da Maranhão Motos. Ele substitui as planilhas compartilhadas e o cruzamento manual de relatórios do Cloud por uma base central, com fila de ligações, histórico de contatos e indicadores de produção da equipe.
 
 > **Status:** em desenvolvimento inicial. A lógica do sistema segue as planilhas reais da operação, descritas em detalhe em [docs/regras-de-negocio.md](docs/regras-de-negocio.md). O passo a passo está em [ROTEIRO.md](ROTEIRO.md).
 
@@ -381,4 +383,4 @@ As planilhas em `Documentos/` têm **nome, CPF e celular de clientes reais**. A 
 - [docs/regras-de-negocio.md](docs/regras-de-negocio.md): lógica extraída das planilhas
 - [docs/implantacao.md](docs/implantacao.md): como publicar, variáveis de produção, primeiro Admin e backups
 - [docs/apresentacao-proposta.pptx](docs/apresentacao-proposta.pptx): proposta apresentada à diretoria
-- Identidade visual: <https://www.maranhaomotos.com.br/>. Logo do sistema em [docs/marca/](docs/marca/); para refazer as versões usadas nas telas (logo e ícone da aba), rode `python scripts/gerar-marca.py` (precisa do Pillow)
+- Identidade visual: <https://www.maranhaomotos.com.br/>. Marca do sistema (**RevisOn**: o "O" é um botão de ligar) em [docs/marca/](docs/marca/): logo horizontal em PNG e SVG, versão para fundo escuro e selo redondo. Para refazer as versões usadas nas telas (logo e ícone da aba), rode `python scripts/gerar-marca.py` (precisa do Pillow)

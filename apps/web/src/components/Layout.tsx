@@ -33,8 +33,14 @@ export default function Layout() {
       {/* ---------- Menu lateral ---------- */}
       <aside className={`sidebar ${menuAberto ? 'is-open' : ''}`} aria-label="Menu principal">
         <div className="sidebar-brand">
-          {/* Logo original sobre a faixa cinza-clara, alinhada com a barra superior */}
-          <img className="brand-logo" src="/marca/logo.webp" alt="Gestão Pós-Venda" width={360} height={127} />
+          {/* Logo RevisOn sobre a faixa cinza-clara, alinhada com a barra superior */}
+          <img
+            className="brand-logo"
+            src="/marca/logo.webp"
+            alt="RevisOn — Gestão Pós-Venda"
+            width={360}
+            height={108}
+          />
           {/* Sem subtítulo aqui: o nome "Maranhão Motos" já aparece na barra superior */}
         </div>
 

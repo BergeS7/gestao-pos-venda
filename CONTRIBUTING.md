@@ -1,6 +1,6 @@
 # Guia de contribuição
 
-Como contribuir com o **Sistema de Gestão do Pós-Venda — Maranhão Motos**. Estes padrões valem para qualquer pessoa que mexer no projeto, inclusive para revisões feitas com ajuda de IA.
+Como contribuir com o **RevisOn**, o sistema de gestão do pós-venda da Maranhão Motos. Estes padrões valem para qualquer pessoa que mexer no projeto, inclusive para revisões feitas com ajuda de IA.
 
 > Antes de começar, leia o [README.md](README.md) (como rodar), o [docs/arquitetura.md](docs/arquitetura.md) (como o código está organizado) e o [docs/regras-de-negocio.md](docs/regras-de-negocio.md) (como a operação funciona).
 

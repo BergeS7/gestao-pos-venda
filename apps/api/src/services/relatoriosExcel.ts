@@ -98,7 +98,7 @@ function valores(c: Contagem): (number | null)[] {
  */
 export async function gerarExcelProducao(relatorio: Relatorio, descricaoFiltro: string): Promise<Buffer> {
   const livro = new ExcelJS.Workbook();
-  livro.creator = "Gestão Pós-Venda — Maranhão Motos";
+  livro.creator = "RevisOn — Gestão Pós-Venda · Maranhão Motos";
   livro.created = new Date();
 
   const periodo = mesPorExtenso(relatorio.mes);

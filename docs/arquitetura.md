@@ -170,10 +170,11 @@ gestao-pos-venda/
 │   ├── implantacao.md            Como publicar, produção e backups (Etapa 11)
 │   ├── regras-de-negocio.md      Lógica extraída das planilhas reais
 │   ├── paleta-de-cores.txt
-│   ├── marca/logo-original.webp  Logo original (fundo transparente), fonte das versões em apps/web/public/marca/
+│   ├── marca/                    Marca RevisOn: revison-horizontal.png/.svg (fonte das telas),
+│   │                             revison-horizontal-escura.svg (fundo escuro) e revison-selo.png
 │   └── apresentacao-proposta.pptx
 ├── scripts/
-│   └── gerar-marca.py            Gera a logo das telas e os ícones a partir da logo original
+│   └── gerar-marca.py            Gera a logo das telas (da logo horizontal) e desenha o ícone da aba
 ├── Documentos/                   Planilhas REAIS (ignorada pelo Git, tem CPF/telefone)
 ├── backups/                      Backups do banco (ignorada pelo Git, tem dados pessoais)
 ├── .prettierignore               O que o Prettier não formata
