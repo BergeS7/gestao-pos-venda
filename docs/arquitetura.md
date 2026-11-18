@@ -93,6 +93,11 @@ gestao-pos-venda/
 │   │   │   │   ├── revisoes.ts   Filtros, paginação, atribuição e distribuição
 │   │   │   │   ├── agenda.ts     Agenda do dia: o que fazer hoje, em seções
 │   │   │   │   ├── privacidade.ts LGPD: busca do titular, dados guardados, anonimizar, prazo de guarda
+│   │   │   │   ├── importacao.ts Importação em duas fases: prévia → confirmação (Etapa 6)
+│   │   │   │   ├── importacao/   Peças da importação (funções puras, com testes)
+│   │   │   │   │   ├── leitura.ts    XLSX/CSV → linhas; acha o cabeçalho e as colunas
+│   │   │   │   │   ├── normalizar.ts Chassi, CPF, celular, município, km, data; válidas × recusadas
+│   │   │   │   │   └── cruzamento.ts A regra: categorias, tipo de OS × km, conclusão automática
 │   │   │   │   ├── relatorios.ts Relatório mensal: regra do mês e contagens (cálculo puro)
 │   │   │   │   ├── relatorios.test.ts Confere o relatório com um mês fictício feito à mão
 │   │   │   │   ├── relatoriosExcel.ts Monta o .xlsx de 4 abas (exceljs)
@@ -155,6 +160,7 @@ gestao-pos-venda/
 │           │   ├── Paginacao.tsx "1–20 de N" com anterior/próxima
 │           │   ├── revisoes/     Peças da fila: filtros, tabela, painel Distribuir
 │           │   ├── agenda/       Seção da Agenda do dia (lista com atalhos de ligar e WhatsApp)
+│           │   ├── importacao/   Cards de números, tabelas da prévia e histórico de importações
 │           │   ├── atendimentos/ Formulário "Registrar contato" e histórico
 │           │   ├── dashboard/    Cards, gráficos (funil e causas) e tabelas de produção
 │           │   └── usuarios/     Formulário de usuário, senha provisória, auditoria
@@ -172,6 +178,7 @@ gestao-pos-venda/
 │               ├── _variables.scss  Cores e fontes da marca (tema do Bootstrap)
 │               └── _layout.scss  Estilos próprios (menu, topo, cards, gráficos, tabelas)
 │
+├── db/seed/                      Arquivos FICTÍCIOS do Cloud para testar a importação (com os números esperados)
 ├── docs/                         Documentação
 │   ├── arquitetura.md            (este arquivo)
 │   ├── implantacao.md            Como publicar, produção e backups (Etapa 11)
@@ -231,6 +238,7 @@ app.ts
    │                      └─► services/revisoes.ts   (monta o filtro e a consulta)
    │                            └─► db/prisma.ts ──► PostgreSQL
    │                      ◄── 200 { itens, total, pagina, ... }
+   ├─ /api/importacoes ──► exigirLogin + exigirPerfil(GESTOR, ADMIN) ──► routes/importacoes.ts (multer)
    ├─ /api/usuarios, /api/auditoria ──► exigirLogin + exigirPerfil(ADMIN) ──► routes/usuarios.ts
    ├─ /api/unidades, /operadoras, /motivos ──► exigirLogin ──► routes/catalogos.ts
    ├─ 404               (só chega aqui se nenhuma rota respondeu)
@@ -295,6 +303,12 @@ Toda chamada seguinte: o navegador manda o cookie sozinho
 - **Mês no horário do Maranhão:** `intervaloDoMes("2026-10")` vai de 01/10 03:00 UTC a 01/11 03:00 UTC (UTC−3, sem horário de verão).
 - **Excel no servidor** (`services/relatoriosExcel.ts` → `exceljs`): as taxas vão como número com formato `0.0%`, para quem abrir poder ordenar e somar. Só contagens, nenhum dado de cliente.
 - **Operadora só vê os próprios números:** como na fila, a rota troca o filtro `operador` pelo id dela.
+
+### Importação (Etapa 6)
+- **Duas fases:** a prévia lê, normaliza e cruza, e guarda as linhas normalizadas em `importacoes.previa` (JSON). A confirmação **refaz o cruzamento** com o banco atual e grava tudo numa transação (até 5 min). Uma trava (`updateMany` de PREVIA para CONFIRMADA) impede confirmar duas vezes.
+- **Regra em funções puras:** `leitura.ts`, `normalizar.ts` e `cruzamento.ts` não usam banco. O serviço só busca o contexto (revisões já na fila, OS gravadas, motos anonimizadas) e chama a regra. Os testes usam os arquivos fictícios de `db/seed/`.
+- **Upload em memória:** o `multer` não salva o arquivo em disco; limite de 10 MB por arquivo e 50.000 linhas.
+- **LGPD:** a prévia tem dados pessoais e é apagada ao confirmar ou cancelar; prévias com mais de 24 h são canceladas sozinhas. As listas da tela mostram o CPF mascarado.
 
 ### Privacidade (LGPD)
 - **Anonimizar em vez de excluir:** `anonimizarCliente()` troca o nome, apaga CPF, celular e observações e tira as revisões da fila, numa transação. As ligações ficam (sem observação) para não mudar relatórios de meses passados. Marca: `clientes.anonimizado_em`.
@@ -422,7 +436,7 @@ O Bootstrap usa `!default` nas variáveis, então as que definimos **antes** del
 | Etapa | O que entra na arquitetura |
 |---|---|
 | ~~4~~ | ✅ PostgreSQL + Prisma: concluída (ver seção 3) |
-| 6 | Upload (`multer`), leitura de planilhas (`exceljs` já instalado na Etapa 10, `csv-parse`). O `zod` já entrou na Etapa 7 |
+| ~~6~~ | ✅ Importação: upload com `multer` (em memória), leitura com `exceljs`/`csv-parse`, prévia guardada em `importacoes.previa` (JSON) e confirmação numa transação. Falta só ajustar às respostas da equipe |
 | ~~7~~ | ✅ Fila de revisões: `schemas/`, `lib/`, rotas de catálogo, atribuir, distribuir e exportar |
 | ~~8~~ | ✅ Atendimentos: `tentativas_contato`, tela do cliente, proteção contra sobrescrita (409). Depois: Agenda do dia (`services/agenda.ts`) |
 | ~~9~~ | ✅ Login (JWT em cookie `httpOnly`), `middleware/auth.ts`, perfis, tela de Usuários, tabela `auditoria` |

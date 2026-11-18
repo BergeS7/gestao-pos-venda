@@ -99,6 +99,25 @@ export async function apiEnviar<T>(
 }
 
 /**
+ * Envia arquivos (multipart/form-data) para a API, como um formulário de upload.
+ * O navegador monta o cabeçalho Content-Type com o "boundary" sozinho: não definir.
+ *
+ * @example
+ *   await apiEnviarArquivos('/importacoes/previa', { revisoes: arquivo }, { exigirTipoOs: 'false' })
+ */
+export async function apiEnviarArquivos<T>(
+  path: string,
+  arquivos: Record<string, File | null | undefined>,
+  campos: Record<string, string> = {},
+): Promise<T> {
+  const form = new FormData()
+  for (const [campo, valor] of Object.entries(campos)) form.append(campo, valor)
+  for (const [campo, arquivo] of Object.entries(arquivos)) if (arquivo) form.append(campo, arquivo)
+  const res = await fetch(`/api${path}`, { method: 'POST', credentials: 'same-origin', body: form })
+  return tratarResposta<T>(res, path)
+}
+
+/**
  * Monta a query string a partir de um objeto, ignorando valores vazios.
  * Ex.: { unidade: 'STI', km: '' } → "?unidade=STI"
  */
@@ -400,3 +419,93 @@ export type DadosTitular = {
 
 /** Resposta da anonimização. */
 export type ResultadoAnonimizacao = { clienteId: number; revisoesEncerradas: number; observacoesApagadas: number }
+
+// ---------------------------------------------------------------------------
+// Importação (Etapa 6, apps/api/src/services/importacao.ts)
+// ---------------------------------------------------------------------------
+
+export type StatusImportacao = 'PREVIA' | 'CONFIRMADA' | 'CANCELADA'
+
+/** Números de uma importação (sem dados pessoais). */
+export type ResumoImportacao = {
+  exigirTipoOs: boolean
+  revisoes: {
+    lidas: number
+    invalidas: number
+    validas: number
+    duplicadas: number
+    jaNaFila: number
+    anonimizados: number
+    comOs: number
+    elegiveis: number
+    elegiveisSemUnidade: number
+    elegiveisComAviso: number
+  } | null
+  espelhamento: { lidas: number; invalidas: number; validas: number; novas: number; conclusoes: number } | null
+  /** Só depois de confirmada. */
+  resultado?: ResultadoImportacao
+}
+
+/** O que a confirmação gravou. */
+export type ResultadoImportacao = {
+  revisoesCriadas: number
+  clientesNovos: number
+  veiculosNovos: number
+  osGravadas: number
+  revisoesConcluidas: number
+}
+
+/** Linha da lista de revisões mostrada na prévia (documento mascarado). */
+export type LinhaImportada = {
+  numero: number
+  nome: string
+  documento: string
+  dataVenda: string | null
+  chassi: string
+  modelo: string
+  km: number
+  cor: string | null
+  celular: string | null
+  municipio: string | null
+  unidade: string | null
+  avisos: string[]
+}
+
+/** Linha recusada na validação. */
+export type LinhaInvalida = { numero: number; motivos: string[]; chassi: string | null; nome: string | null }
+
+/** Listas da prévia (até 300 de cada; os totais estão no resumo). */
+export type ListasImportacao = {
+  invalidas: LinhaInvalida[]
+  duplicadas: LinhaImportada[]
+  jaNaFila: LinhaImportada[]
+  anonimizados: { numero: number; chassi: string; km: number }[]
+  comOs: (LinhaImportada & { tipoOs: string })[]
+  elegiveis: LinhaImportada[]
+  osInvalidas: LinhaInvalida[]
+  conclusoes: { id: number; chassi: string; km: number; tipoOs: string }[]
+}
+
+/** Resposta da prévia (POST /importacoes/previa ou GET /importacoes/:id em prévia). */
+export type PreviaImportacao = {
+  id: number
+  status: StatusImportacao
+  resumo: ResumoImportacao
+  listas: ListasImportacao | null
+}
+
+/** Uma linha do histórico de importações. */
+export type ImportacaoHistorico = {
+  id: number
+  tipo: 'REVISOES' | 'ESPELHAMENTO'
+  arquivo: string
+  arquivoEspelhamento: string | null
+  totalLinhas: number
+  totalValidos: number
+  totalInvalidos: number
+  status: StatusImportacao
+  resumo: ResumoImportacao | null
+  criadoEm: string
+  confirmadaEm: string | null
+  usuario: { id: number; nome: string } | null
+}

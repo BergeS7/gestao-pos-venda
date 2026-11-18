@@ -140,20 +140,30 @@ model Motivo {
 // Importação dos arquivos do Cloud
 // -----------------------------------------------------------------------------
 
-/// Registro de cada arquivo importado (histórico de importações)
+/// Registro de cada importação (histórico). Uma importação pode trazer a lista
+/// de revisões, o espelhamento de OS ou os dois juntos (Etapa 6).
+/// `tipo` = REVISOES quando veio a lista; ESPELHAMENTO quando só veio o espelhamento.
 model Importacao {
-  id             Int              @id @default(autoincrement())
-  tipo           TipoImportacao
-  /// Nome original do arquivo enviado
-  arquivo        String           @db.VarChar(255)
+  id                  Int              @id @default(autoincrement())
+  tipo                TipoImportacao
+  /// Nome original do arquivo principal (lista de revisões, ou o espelhamento se veio só ele)
+  arquivo             String           @db.VarChar(255)
+  /// Nome do arquivo de espelhamento, quando veio junto com a lista
+  arquivoEspelhamento String?          @map("arquivo_espelhamento") @db.VarChar(255)
   /// Período de referência (ex.: mês de venda). Formato livre até a Etapa 6.
-  periodoRef     String?          @map("periodo_ref") @db.VarChar(20)
-  totalLinhas    Int              @default(0) @map("total_linhas")
-  totalValidos   Int              @default(0) @map("total_validos")
-  totalInvalidos Int              @default(0) @map("total_invalidos")
-  status         StatusImportacao @default(PREVIA)
-  usuarioId      Int?             @map("usuario_id")
-  criadoEm       DateTime         @default(now()) @map("criado_em")
+  periodoRef          String?          @map("periodo_ref") @db.VarChar(20)
+  totalLinhas         Int              @default(0) @map("total_linhas")
+  totalValidos        Int              @default(0) @map("total_validos")
+  totalInvalidos      Int              @default(0) @map("total_invalidos")
+  status              StatusImportacao @default(PREVIA)
+  usuarioId           Int?             @map("usuario_id")
+  /// Números da prévia/confirmação (lidas, inválidas, duplicadas, com OS, elegíveis...). Sem dados pessoais.
+  resumo              Json?
+  /// Linhas já lidas e normalizadas, guardadas entre a prévia e a confirmação.
+  /// TEM dados pessoais: é apagada ao confirmar ou cancelar (LGPD).
+  previa              Json?
+  confirmadaEm        DateTime?        @map("confirmada_em")
+  criadoEm            DateTime         @default(now()) @map("criado_em")
 
   usuario       Usuario?       @relation(fields: [usuarioId], references: [id])
   ordensServico OrdemServico[]

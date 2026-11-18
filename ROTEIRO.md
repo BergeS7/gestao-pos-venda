@@ -77,7 +77,7 @@ Dentro de `apps/`:
 - [x] Documentar colunas e lógica em [docs/regras-de-negocio.md](docs/regras-de-negocio.md)
 - [x] Chave de cruzamento identificada: **chassi**
 - [ ] Responder as [perguntas em aberto](docs/regras-de-negocio.md#7-perguntas-para-a-equipe), principalmente: o tipo de OS precisa bater com o KM? Qual é o período do espelhamento?
-- [ ] Criar em `db/seed/` versões **fictícias** dos dois arquivos de entrada, com as mesmas colunas, para os testes
+- [x] Criar em `db/seed/` versões **fictícias** dos dois arquivos de entrada, com as mesmas colunas, para os testes
 
 **Pronto quando:** as perguntas em aberto estão respondidas e os arquivos fictícios de teste existem.
 
@@ -85,25 +85,25 @@ Dentro de `apps/`:
 
 ## Etapa 6 — Importação (o coração do sistema)
 Backend:
-- [ ] Upload de arquivos com `multer`
-- [ ] Ler CSV com `csv-parse` e XLSX com `exceljs`
-- [ ] Reconhecer as colunas da **lista de revisões** (Pessoa, CPF/CNPJ, Data Venda, Chassi, Modelo, Km, Cor, Celular, Município) e do **espelhamento** (Chassi, Tipo O.S., Código Assistência Técnica)
-- [ ] Normalizar: chassi (sem espaços, maiúsculo, 17 caracteres), município (sem `/MA`), CPF e celular
-- [ ] Validar cada linha (`zod`): campos obrigatórios, chassi válido, km entre 1000, 6000, 12000 e 18000
-- [ ] Separar os registros em **válidos**, **duplicados** (mesmo chassi + km) e **inconsistentes**
-- [ ] Cruzar por **chassi**: quem tem OS no espelhamento sai, o resto é **elegível**
-- [ ] Escrever um teste (`vitest`) da regra de cruzamento com os arquivos fictícios
-- [ ] Gravar em duas fases: **prévia** (rascunho) e depois **confirmação**
-- [ ] Registrar cada importação na tabela `importacoes`
+- [x] Upload de arquivos com `multer`
+- [x] Ler CSV com `csv-parse` e XLSX com `exceljs`
+- [x] Reconhecer as colunas da **lista de revisões** (Pessoa, CPF/CNPJ, Data Venda, Chassi, Modelo, Km, Cor, Celular, Município) e do **espelhamento** (Chassi, Tipo O.S., Código Assistência Técnica)
+- [x] Normalizar: chassi (sem espaços, maiúsculo, 17 caracteres), município (sem `/MA`), CPF e celular
+- [x] Validar cada linha (`zod`): campos obrigatórios, chassi válido, km entre 1000, 6000, 12000 e 18000
+- [x] Separar os registros em **válidos**, **duplicados** (mesmo chassi + km) e **inconsistentes**
+- [x] Cruzar por **chassi**: quem tem OS no espelhamento sai, o resto é **elegível**
+- [x] Escrever um teste (`vitest`) da regra de cruzamento com os arquivos fictícios
+- [x] Gravar em duas fases: **prévia** (rascunho) e depois **confirmação**
+- [x] Registrar cada importação na tabela `importacoes`
 
 Frontend:
-- [ ] Tela em 4 passos: Arquivos → Validação → Cruzamento → Confirmação
-- [ ] Cards com os totais e uma tabela de prévia
-- [ ] Histórico de importações
+- [x] Tela em 4 passos: Arquivos → Validação → Cruzamento → Confirmação
+- [x] Cards com os totais e uma tabela de prévia
+- [x] Histórico de importações
 
 > **Quando usar Python:** só se os relatórios do Cloud vierem muito bagunçados (cabeçalhos em várias linhas, células mescladas, encoding estranho) e ficar difícil tratar em Node. Nesse caso, crie `apps/importer` com um script em **pandas** que limpa o arquivo e devolve um CSV padronizado para a API. Comece sem Python.
 
-**Pronto quando:** você importa os dois arquivos de teste e vê os números de elegíveis corretos.
+**Pronto quando:** você importa os dois arquivos de teste e vê os números de elegíveis corretos. ✅ Feito com os arquivos fictícios (números em [db/seed/README.md](db/seed/README.md)). A validação de cada linha usa funções próprias em vez de `zod` (mensagens por linha mais claras). **Falta:** ajustar às respostas da equipe (Etapa 5): tipo de OS × km (hoje é uma opção na tela), unidade pelo município (tabela provisória) e testar com um arquivo real do Cloud.
 
 ---
 
@@ -128,7 +128,7 @@ Frontend:
 - [x] Validação condicional: motivo obrigatório se *não* ou *retornar*; data agendada obrigatória se *sim*; próximo contato obrigatório quando a revisão volta para a fila; só agenda quem falou com o cliente
 - [x] Atualizar a situação da revisão (`agendado`, `retornar`, `nao_agendado`, `buscar_contato`), conforme a **ação do motivo** (`motivos.acao`)
 - [x] Marcar a revisão como **concluída** à mão (e reabrir)
-- [ ] Concluir automaticamente pelo espelhamento do mês seguinte. *Depende da Etapa 6 (importação).*
+- [x] Concluir automaticamente pelo espelhamento do mês seguinte (Etapa 6: OS do mesmo km conclui a revisão aberta)
 - [x] **Agenda do dia** (`/agenda`, antes "Atendimentos"): ligar hoje (com atrasados), vêm hoje à oficina, agendados que ainda não vieram, buscar contato e ainda sem contato; filtros de unidade e operadora; a operadora vê só a carteira dela
 - [x] **Proteção contra sobrescrita:** gravar só se a `versao` não mudou; se mudou, responder 409, avisar o usuário e oferecer "Recarregar" sem perder o que foi digitado
 
@@ -172,8 +172,8 @@ Reproduzir o relatório mensal de produção que hoje é feito à mão:
 ---
 
 ## Etapa 11 — Qualidade e publicação
-- [x] Testes automáticos com `vitest` nos dois apps (66 testes: relatório, datas, CSV, validações, limite de login, permissões, senhas, formatos)
-- [ ] Testes da regra de cruzamento, a parte mais crítica. *Depende da Etapa 6 (importação), que ainda não existe; o `vitest` já está pronto para recebê-los.*
+- [x] Testes automáticos com `vitest` nos dois apps (105 testes: relatório, datas, CSV, validações, limite de login, permissões, senhas, formatos)
+- [x] Testes da regra de cruzamento, a parte mais crítica (`services/importacao/cruzamento.test.ts` com os arquivos de `db/seed/`, mais os testes de rota da importação)
 - [x] Lint e Prettier nos dois apps. O lint usa **oxlint** em vez de ESLint: o plugin de TypeScript do ESLint ainda não funciona com o TypeScript 7 (compilador nativo) usado no projeto; o oxlint aplica as mesmas regras. Avisos bloqueiam o `npm run check`
 - [x] Rotina de backup do banco (`npm run db:backup`) e teste de restauração (`npm run db:testar-backup`), testados localmente
 - [x] Preparar a publicação: a API serve as telas em produção (um endereço só, exigência do cookie de login), cabeçalhos de segurança (`helmet`), script do primeiro Admin (`db:producao`) e o guia [docs/implantacao.md](docs/implantacao.md)

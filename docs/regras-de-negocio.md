@@ -77,6 +77,35 @@ Ordens de serviço já abertas. Se o chassi está aqui, a revisão já foi feita
 
 > **A validar:** o cruzamento deve considerar só o chassi, ou também se o **tipo de OS corresponde ao KM** (ex.: uma OS de 1ª revisão não deveria tirar o cliente da lista de 6000 km)? E qual é o período do espelhamento?
 
+### 3.1 Como o sistema faz (Etapa 6)
+
+Código em `apps/api/src/services/importacao/` (`cruzamento.ts` tem a regra; `cruzamento.test.ts` confere com os arquivos fictícios de `db/seed/`).
+
+Cada linha válida da lista cai em **uma** categoria, nesta ordem:
+
+| Categoria | Quando | O que acontece |
+|---|---|---|
+| Recusada | Falta nome, chassi, modelo ou km; chassi sem 17 caracteres; km fora de 1000/6000/12000/18000 | Aparece na prévia com o motivo e a linha do arquivo |
+| Repetida | Mesmo chassi + km já apareceu antes no mesmo arquivo | Ignorada |
+| Já na fila | Essa revisão (chassi + km) já existe no sistema | Ignorada (não duplica) |
+| Anonimizada | A moto é de um cliente anonimizado a pedido (LGPD) | Ignorada: os dados não voltam |
+| Com OS | O chassi tem OS (ver modos abaixo) | Sai da lista: já fez a revisão |
+| **Elegível** | Nenhuma das anteriores | Entra na fila como Pendente, **sem operadora** |
+
+**Modos do cruzamento** (opção na tela, enquanto a equipe não responde):
+- **Só chassi** (padrão, igual à planilha): qualquer OS do chassi **no espelhamento enviado** tira a linha.
+- **Tipo de OS × km**: só tira se o tipo corresponde ao km (1ª revisão → 1000; 2ª → 6000; periódica → 12000/18000). Tipo desconhecido (ex.: EXTERNO - PACOTE) não tira.
+
+OS de **importações anteriores** (já gravadas) só contam quando o tipo corresponde ao km, nos dois modos. Sem isso, a OS da 1ª revisão, gravada há um ano, tiraria o cliente da lista de 6000 km para sempre.
+
+**Conclusão automática:** ao importar um espelhamento, toda revisão **aberta** cujo chassi tem OS do **mesmo km** é marcada como concluída. Tipo desconhecido não conclui.
+
+**Normalização:** chassi sem espaços/pontos/traços e em maiúsculas; CPF/CNPJ só com dígitos (número do Excel recupera o zero da frente); celular com DDD, sem 55 e sem o 0 de operadora; município em maiúsculas sem `/MA`; data da venda em texto, data do Excel ou número de série. Celular, CPF e data com problema não recusam a linha: ficam vazios e aparecem como aviso.
+
+**Unidade pelo município** (provisório, seção 7): SANTA INÊS e PIO XII → STI; ZÉ DOCA → ZDC; BURITICUPU → BRT. Fora da tabela, a revisão entra sem unidade e a prévia avisa.
+
+**Cliente:** procurado pelo CPF/CNPJ; sem CPF, é criado um novo. Moto já cadastrada recebe a nova revisão e tem o celular e o município atualizados com o dado mais novo do Cloud.
+
 ### Quando cada revisão é trabalhada
 Tempo real entre a **data da venda** e a **data do contato**, medido na planilha de acompanhamento:
 

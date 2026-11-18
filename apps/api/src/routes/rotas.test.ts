@@ -10,7 +10,9 @@
  *  - carteira: a operadora só vê e só mexe nas revisões dela;
  *  - atendimento: registrar ligação, validações e proteção contra sobrescrita (409);
  *  - exportação CSV sem CPF;
- *  - LGPD: acessos auditados, busca do titular, anonimização e prazo de guarda.
+ *  - LGPD: acessos auditados, busca do titular, anonimização e prazo de guarda;
+ *  - importação (Etapa 6): prévia, confirmação, conclusão automática e reimportação,
+ *    com os arquivos fictícios de db/seed/ (números esperados em db/seed/README.md).
  *
  * Precisam de DATABASE_URL_TESTE (nome do banco terminando em "_teste"); sem
  * ela são pulados. Como preparar: README, seção "Testes", e src/teste/prepararBanco.ts.
@@ -18,7 +20,9 @@
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { hoje, somarDias } from "../lib/datas.js";
-import { entrar, iniciarApi, pararApi, req, USUARIOS_TESTE as U } from "../teste/cliente.js";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { entrar, enviarArquivos, iniciarApi, pararApi, req, USUARIOS_TESTE as U } from "../teste/cliente.js";
 
 /** Formato de cada item da fila, só com o que os testes usam. */
 type ItemFila = {
@@ -317,6 +321,99 @@ describe.skipIf(!process.env.DATABASE_URL_TESTE)("rotas da API (banco de testes)
         select: { veiculo: { select: { clienteId: true } } },
       });
       expect((await clientesForaDoPrazo(12)).map((c) => c.id)).not.toContain(comAberta.veiculo.clienteId);
+    });
+  });
+  describe("importação (Etapa 6)", () => {
+    const pasta = resolve(import.meta.dirname, "../../../../db/seed");
+    const lista = { nome: "lista-revisões.csv", conteudo: readFileSync(resolve(pasta, "lista-revisoes-exemplo.csv")) };
+    const espelho = { nome: "espelhamento.csv", conteudo: readFileSync(resolve(pasta, "espelhamento-exemplo.csv")) };
+    let idPrevia: number;
+
+    it("só Gestor e Admin importam", async () => {
+      for (const quem of ["operadoraA", "diretoria"] as const) {
+        const r = await enviarArquivos("/api/importacoes/previa", sessao[quem], { revisoes: lista });
+        expect(r.status).toBe(403);
+      }
+    });
+
+    it("sem arquivo ou com campo estranho: 400", async () => {
+      expect((await enviarArquivos("/api/importacoes/previa", sessao.gestor, {})).status).toBe(400);
+      expect((await enviarArquivos("/api/importacoes/previa", sessao.gestor, { outro: lista })).status).toBe(400);
+    });
+
+    it("prévia: números de db/seed/README.md e nada entra na fila ainda", async () => {
+      const r = await enviarArquivos("/api/importacoes/previa", sessao.gestor, {
+        revisoes: lista,
+        espelhamento: espelho,
+      });
+      expect(r.status).toBe(201);
+      idPrevia = r.corpo.id;
+      expect(r.corpo.resumo.revisoes).toMatchObject({
+        lidas: 15,
+        invalidas: 3,
+        duplicadas: 1,
+        jaNaFila: 1,
+        comOs: 3,
+        elegiveis: 7,
+        elegiveisSemUnidade: 1,
+      });
+      expect(r.corpo.resumo.espelhamento).toMatchObject({ lidas: 6, invalidas: 1, novas: 5, conclusoes: 1 });
+      expect(r.corpo.listas.elegiveis[0]).not.toHaveProperty("cpf");
+
+      const fila = await req("GET", "/api/revisoes?busca=9C2EXP", { cookie: sessao.gestor });
+      expect(fila.corpo.total).toBe(0);
+    });
+
+    it("confirmar grava na fila (sem operadora) e conclui pelo espelhamento", async () => {
+      const r = await req("POST", `/api/importacoes/${idPrevia}/confirmar`, { cookie: sessao.gestor });
+      expect(r.status).toBe(200);
+      expect(r.corpo.resultado).toMatchObject({
+        revisoesCriadas: 7,
+        veiculosNovos: 6,
+        clientesNovos: 6,
+        osGravadas: 5,
+        revisoesConcluidas: 1,
+      });
+
+      const fila = await req<{ itens: ItemFila[]; total: number }>("GET", "/api/revisoes?busca=9C2EXP&porPagina=100", {
+        cookie: sessao.gestor,
+      });
+      expect(fila.corpo.total).toBe(7);
+      for (const item of fila.corpo.itens) {
+        expect(item.operador).toBeNull();
+        expect(item.situacao).toBe("PENDENTE");
+      }
+      const concluida = await req("GET", "/api/revisoes?busca=9C2TST0000T000004", { cookie: sessao.gestor });
+      expect(concluida.corpo.itens[0].situacao).toBe("CONCLUIDA");
+
+      // Não dá para confirmar de novo
+      expect((await req("POST", `/api/importacoes/${idPrevia}/confirmar`, { cookie: sessao.gestor })).status).toBe(409);
+    });
+
+    it("reimportar a lista: o que já entrou fica de fora; OS antigas só contam se o tipo bate com o km", async () => {
+      const r = await enviarArquivos("/api/importacoes/previa", sessao.admin, { revisoes: lista });
+      expect(r.status).toBe(201);
+      // …00104 (6000 km, OS de 1ª revisão) e …00105 (EXTERNO) voltam como elegíveis; …00103 continua fora
+      expect(r.corpo.resumo.revisoes).toMatchObject({ jaNaFila: 8, comOs: 1, elegiveis: 2 });
+      expect(r.corpo.listas.elegiveis.map((l: { chassi: string }) => l.chassi.slice(-3)).sort()).toEqual([
+        "104",
+        "105",
+      ]);
+
+      const cancelar = await req("POST", `/api/importacoes/${r.corpo.id}/cancelar`, { cookie: sessao.admin });
+      expect(cancelar.status).toBe(200);
+      expect(cancelar.corpo.status).toBe("CANCELADA");
+    });
+
+    it("histórico: confirmada e cancelada, sem as linhas guardadas", async () => {
+      const r = await req("GET", "/api/importacoes", { cookie: sessao.gestor });
+      expect(r.status).toBe(200);
+      const [cancelada, confirmada] = r.corpo;
+      expect(cancelada.status).toBe("CANCELADA");
+      expect(confirmada.status).toBe("CONFIRMADA");
+      expect(confirmada.resumo.resultado.revisoesCriadas).toBe(7);
+      expect(confirmada).not.toHaveProperty("previa");
+      expect(confirmada.arquivo).toBe("lista-revisões.csv");
     });
   });
 });

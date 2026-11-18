@@ -74,6 +74,26 @@ export async function req<T = CorpoQualquer>(
   return { status: r.status, corpo: tipo.includes("json") ? JSON.parse(texto) : texto, headers: r.headers };
 }
 
+/**
+ * Envia arquivos (multipart/form-data), como o formulário de upload do navegador.
+ * @param arquivos campo → { nome do arquivo, conteúdo }
+ * @param campos campos de texto extras (ex.: { exigirTipoOs: "true" })
+ */
+export async function enviarArquivos<T = CorpoQualquer>(
+  caminho: string,
+  cookie: string,
+  arquivos: Record<string, { nome: string; conteudo: Buffer }>,
+  campos: Record<string, string> = {},
+): Promise<Resposta<T>> {
+  const form = new FormData();
+  for (const [campo, valor] of Object.entries(campos)) form.append(campo, valor);
+  for (const [campo, a] of Object.entries(arquivos)) form.append(campo, new Blob([new Uint8Array(a.conteudo)]), a.nome);
+  const r = await fetch(base + caminho, { method: "POST", headers: { cookie }, body: form });
+  const texto = await r.text();
+  const tipo = r.headers.get("content-type") ?? "";
+  return { status: r.status, corpo: tipo.includes("json") ? JSON.parse(texto) : texto, headers: r.headers };
+}
+
 /** Faz login e devolve o cookie de sessão ("sessao=..."). */
 export async function entrar(email: string, senha = SENHA_TESTE): Promise<string> {
   const r = await req("POST", "/api/auth/login", { corpo: { email, senha } });

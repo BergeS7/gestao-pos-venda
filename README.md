@@ -48,7 +48,8 @@ A equipe **continua exportando os arquivos do Cloud**. A versão 1 não tem inte
 - Upload de **lista de revisões** e **espelhamento de OS** (`.xlsx` ou `.csv`).
 - Etapas: **Arquivos → Validação → Cruzamento → Confirmação**.
 - Normalizações: chassi (17 caracteres, maiúsculo), CPF, celular e município (sem `/MA`).
-- **Elegível** = chassi da lista **sem** OS no espelhamento.
+- **Elegível** = chassi da lista **sem** OS no espelhamento (opção: exigir que o tipo da OS corresponda ao km).
+- **Conclusão automática:** revisão aberta cujo chassi aparece no espelhamento com OS do mesmo km vira "concluída".
 - Mostra duplicidades, inconsistências e clientes removidos por já terem OS.
 - Histórico de importações.
 
@@ -367,6 +368,19 @@ O tema fica em `src/styles/`: as cores da marca estão em `_variables.scss` e o 
 As planilhas em `Documentos/` têm **nome, CPF e celular de clientes reais**. A pasta está no `.gitignore` e **nunca** deve ir para o GitHub. Para desenvolver, use só os dados fictícios do seed (`apps/api/prisma/seed.ts`).
 
 ---
+
+### ✅ Importação (Etapa 6)
+Tela **Importações** (Gestor e Admin), em 4 passos: **Arquivos → Validação → Cruzamento → Confirmação**. Aceita os relatórios do Cloud como saem (.xlsx ou .csv, separador `;` ou `,`, UTF-8 ou Latin-1, com linhas de título acima do cabeçalho). Só a confirmação grava; as revisões entram **sem operadora** e o Gestor usa "Distribuir" na fila. Arquivos fictícios para testar em [db/seed/](db/seed/) (os números esperados estão no README de lá).
+
+| Rota (Gestor e Admin) | O que faz |
+|---|---|
+| `POST /api/importacoes/previa` | Upload (multipart): `revisoes` e/ou `espelhamento` (até 10 MB cada) e `exigirTipoOs`. Lê, valida e cruza; nada entra na fila |
+| `GET /api/importacoes` | Histórico (últimas 50), só com números |
+| `GET /api/importacoes/:id` | Uma importação; se ainda em prévia, refaz o cruzamento e devolve as listas |
+| `POST /api/importacoes/:id/confirmar` | Grava: clientes, motos, revisões elegíveis, OS novas e conclusões automáticas |
+| `POST /api/importacoes/:id/cancelar` | Descarta a prévia |
+
+As perguntas ainda abertas com a equipe viraram **pontos de ajuste**: o tipo de OS × km é uma opção na tela, e a unidade pelo município é uma tabela em `services/importacao/cruzamento.ts` (município fora dela fica sem unidade e aparece na prévia).
 
 ### ✅ Privacidade (LGPD)
 Acessos a dados de clientes ficam na auditoria (quem abriu a tela do cliente, quem exportou a fila). A tela **Privacidade (LGPD)**, só do Admin, atende os pedidos dos clientes: ver tudo o que está guardado (e baixar) ou **anonimizar**. O `npm run db:retencao` aplica o prazo de guarda. Detalhes, procedimentos e decisões pendentes da empresa em [docs/lgpd.md](docs/lgpd.md).
