@@ -412,5 +412,6 @@ A cada envio para a `main` e a cada pull request, o GitHub Actions roda o mesmo 
 - [docs/regras-de-negocio.md](docs/regras-de-negocio.md): lógica extraída das planilhas
 - [docs/implantacao.md](docs/implantacao.md): como publicar, variáveis de produção, primeiro Admin e backups
 - [docs/lgpd.md](docs/lgpd.md): dados pessoais, pedidos dos clientes, prazo de guarda e decisões pendentes
+- [docs/manual-do-usuario.md](docs/manual-do-usuario.md): **manual do usuário**, por perfil (operadora, gestor, diretoria, admin), para o treinamento do piloto
 - [docs/apresentacao-proposta.pptx](docs/apresentacao-proposta.pptx): proposta apresentada à diretoria
 - Identidade visual: <https://www.maranhaomotos.com.br/>. Marca do sistema (**RevisOn**: o "O" é um botão de ligar) em [docs/marca/](docs/marca/): logo horizontal em PNG e SVG, versão para fundo escuro e selo redondo. Para refazer as versões usadas nas telas (logo e ícone da aba), rode `python scripts/gerar-marca.py` (precisa do Pillow)

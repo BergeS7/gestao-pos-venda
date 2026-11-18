@@ -181,6 +181,7 @@ Reproduzir o relatório mensal de produção que hoje é feito à mão:
 - [x] Conferência automática no GitHub (CI): `npm run check` a cada envio, com PostgreSQL ([.github/workflows/conferencia.yml](.github/workflows/conferencia.yml))
 - [x] LGPD: acessos a dados de clientes auditados, tela Privacidade (ver e anonimizar a pedido do cliente), prazo de guarda (`db:retencao`), aviso no login e [docs/lgpd.md](docs/lgpd.md). Falta a empresa decidir prazo, base legal e encarregado
 - [ ] Hospedagem: escolher com a TI (servidor da empresa ou serviço gerenciado) e publicar seguindo o guia
+- [x] Manual do usuário por perfil ([docs/manual-do-usuario.md](docs/manual-do-usuario.md)), para o treinamento do piloto
 - [ ] Piloto com a oficina e coleta de feedback
 - [x] Marca **RevisOn** aplicada: logo no menu e no login, ícone da aba (botão de ligar) e título da página
 

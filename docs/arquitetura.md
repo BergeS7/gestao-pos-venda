@@ -183,6 +183,7 @@ gestao-pos-venda/
 │   ├── arquitetura.md            (este arquivo)
 │   ├── implantacao.md            Como publicar, produção e backups (Etapa 11)
 │   ├── lgpd.md                   Dados pessoais, pedidos dos clientes, prazo de guarda
+│   ├── manual-do-usuario.md      Manual para quem usa o sistema, por perfil
 │   ├── regras-de-negocio.md      Lógica extraída das planilhas reais
 │   ├── paleta-de-cores.txt
 │   ├── marca/                    Marca RevisOn: revison-horizontal.png/.svg (fonte das telas),
